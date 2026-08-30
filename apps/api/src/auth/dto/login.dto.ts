@@ -1,0 +1,18 @@
+import { IsString, MinLength, MaxLength } from 'class-validator';
+
+export class LoginDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
+  username!: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password!: string;
+}
+
+export class RefreshDto {
+  @IsString()
+  refreshToken!: string;
+}

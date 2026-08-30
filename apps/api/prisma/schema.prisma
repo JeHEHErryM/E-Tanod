@@ -1,0 +1,494 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  BARANGAY_ADMIN
+  TANOD
+  RESIDENT
+}
+
+enum PatrolStatus {
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  INCOMPLETE
+  CANCELLED
+}
+
+enum CheckpointStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ScanResult {
+  VALID
+  INVALID
+  DUPLICATE
+  NOT_IN_PATROL
+  INACTIVE
+  LOCATION_UNAVAILABLE
+  OUTSIDE_RADIUS
+}
+
+enum IncidentStatus {
+  PENDING
+  VERIFIED
+  RESOLVED
+  REJECTED
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentSource {
+  TANOD
+  RESIDENT
+  ANONYMOUS
+  ADMIN
+}
+
+enum SyncState {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+  CONFLICT
+}
+
+enum NotificationType {
+  PATROL_ASSIGNED
+  SCHEDULE_CHANGE
+  CHECKPOINT_STATUS
+  NEW_INCIDENT
+  EMERGENCY
+  MISSED_CHECKPOINT
+  PATROL_NOT_STARTED
+  ADMIN_INSTRUCTION
+  REPORT_SUBMITTED
+  REPORT_STATUS
+  VERIFIED_ALERT
+  SYNC_ISSUE
+  GENERAL
+}
+
+model RoleRecord {
+  id        String   @id @default(cuid())
+  name      Role     @unique
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   UserRole[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  fullName     String
+  email        String?   @unique
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  isVerified   Boolean   @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  barangayId String?
+  barangay   Barangay? @relation(fields: [barangayId], references: [id], onDelete: SetNull)
+
+  profile           Profile?
+  roles             UserRole[]
+  primaryRoleId     String?
+  patrolAssignments PatrolAssignment[] @relation("TanodAssignments")
+  patrolSessions    PatrolSession[]    @relation("TanodSessions")
+  patrolSchedulesCreated PatrolSchedule[]
+  checkpointsScanned CheckpointScan[]
+  incidentsCreated  Incident[]        @relation("IncidentReporter")
+  incidentVerified  Incident[]        @relation("IncidentVerifier")
+  statusChanges     IncidentStatusHistory[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+  syncRecords       SyncRecord[]
+
+  @@index([barangayId])
+  @@index([primaryRoleId])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role RoleRecord @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+}
+
+model Profile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  contactNumber String?
+  address       String?
+  birthdate     DateTime?
+  gender        String?
+  barangayId    String?
+  escooter      Boolean
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Barangay {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users          User[]
+  checkpoints    Checkpoint[]
+  patrolSchedules PatrolSchedule[]
+  incidents      Incident[]
+  residentReports ResidentReport[]
+
+  @@index([isActive])
+}
+
+model PatrolSchedule {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  barangayId   String
+  barangay     Barangay @relation(fields: [barangayId], references: [id], onDelete: Cascade)
+  scheduledDate String
+  startTime    String
+  endTime      String
+  isActive     Boolean  @default(true)
+  createdById  String
+  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignments PatrolAssignment[]
+  requiredCheckpoints PatrolScheduleCheckpoint[]
+
+  @@index([barangayId])
+  @@index([scheduledDate])
+}
+
+model PatrolScheduleCheckpoint {
+  id            String @id @default(cuid())
+  patrolScheduleId String
+  patrolSchedule   PatrolSchedule @relation(fields: [patrolScheduleId], references: [id], onDelete: Cascade)
+  checkpointId     String
+  checkpoint       Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  order           Int
+
+  @@unique([patrolScheduleId, checkpointId])
+}
+
+model PatrolAssignment {
+  id              String   @id @default(cuid())
+  patrolScheduleId String
+  patrolSchedule  PatrolSchedule @relation(fields: [patrolScheduleId], references: [id], onDelete: Cascade)
+  tanodId         String
+  tanod           User     @relation("TanodAssignments", fields: [tanodId], references: [id], onDelete: Restrict)
+  status          PatrolStatus @default(SCHEDULED)
+  scheduledAt     DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sessions PatrolSession[]
+
+  @@unique([patrolScheduleId, tanodId])
+  @@index([tanodId])
+  @@index([status])
+}
+
+model PatrolSession {
+  id                 String   @id @default(cuid())
+  patrolAssignmentId String
+  patrolAssignment   PatrolAssignment @relation(fields: [patrolAssignmentId], references: [id], onDelete: Cascade)
+  tanodId            String
+  tanod              User @relation("TanodSessions", fields: [tanodId], references: [id], onDelete: Restrict)
+  startedAt          DateTime @default(now())
+  endedAt            DateTime?
+  status             PatrolStatus @default(ACTIVE)
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  locations    PatrolLocation[]
+  checkpointScans CheckpointScan[]
+
+  @@index([patrolAssignmentId])
+  @@index([tanodId])
+  @@index([status])
+}
+
+model PatrolLocation {
+  id              String   @id @default(cuid())
+  patrolSessionId String
+  patrolSession   PatrolSession @relation(fields: [patrolSessionId], references: [id], onDelete: Cascade)
+  latitude        Float
+  longitude       Float
+  accuracy        Float?
+  recordedAt      DateTime @default(now())
+
+  @@index([patrolSessionId])
+}
+
+model Checkpoint {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  latitude    Float
+  longitude   Float
+  radiusMeters Float   @default(50)
+  status      CheckpointStatus @default(ACTIVE)
+  barangayId  String
+  barangay    Barangay @relation(fields: [barangayId], references: [id], onDelete: Restrict)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  qrToken        CheckpointQRToken?
+  scans          CheckpointScan[]
+  requiredInSchedule PatrolScheduleCheckpoint[]
+
+  @@index([barangayId])
+  @@index([status])
+}
+
+model CheckpointQRToken {
+  id           String   @id @default(cuid())
+  checkpointId String   @unique
+  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  token        String   @unique
+  validFrom    DateTime @default(now())
+  validUntil   DateTime?
+  createdAt    DateTime @default(now())
+  regeneratedAt DateTime @updatedAt
+
+  @@index([token])
+}
+
+model CheckpointScan {
+  id              String   @id @default(cuid())
+  checkpointId    String
+  checkpoint      Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Restrict)
+  patrolSessionId String
+  patrolSession   PatrolSession @relation(fields: [patrolSessionId], references: [id], onDelete: Cascade)
+  tanodId         String
+  tanod           User @relation(fields: [tanodId], references: [id], onDelete: Restrict)
+  latitude        Float?
+  longitude       Float?
+  distanceMeters  Float?
+  accuracy        Float?
+  result          ScanResult
+  failureReason   String?
+  scannedAt       DateTime @default(now())
+
+  @@unique([checkpointId, patrolSessionId])
+  @@index([patrolSessionId])
+  @@index([tanodId])
+  @@index([result])
+}
+
+model IncidentCategory {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  severity    IncidentSeverity @default(MEDIUM)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  incidents Incident[]
+}
+
+model Incident {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  categoryId  String
+  category    IncidentCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  description String
+  latitude    Float?
+  longitude   Float?
+  barangayId  String?
+  barangay    Barangay? @relation(fields: [barangayId], references: [id], onDelete: SetNull)
+  severity    IncidentSeverity @default(MEDIUM)
+  source      IncidentSource @default(TANOD)
+  status      IncidentStatus @default(PENDING)
+  isAnonymous Boolean @default(false)
+  reportedAt  DateTime @default(now())
+  createdById String?
+  createdBy   User? @relation("IncidentReporter", fields: [createdById], references: [id], onDelete: SetNull)
+  verifiedById String?
+  verifiedBy  User? @relation("IncidentVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+  verifiedAt  DateTime?
+  residentReportId String? @unique
+  residentReport   ResidentReport? @relation(fields: [residentReportId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attachments   IncidentAttachment[]
+  statusHistory IncidentStatusHistory[]
+
+  @@index([barangayId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([reportedAt])
+  @@index([latitude, longitude])
+}
+
+model IncidentAttachment {
+  id         String   @id @default(cuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  url        String
+  mimeType   String
+  sizeBytes  Int
+  fileName   String
+  createdAt  DateTime @default(now())
+
+  @@index([incidentId])
+}
+
+model IncidentStatusHistory {
+  id         String   @id @default(cuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  status     IncidentStatus
+  note       String?
+  changedByUserId String?
+  changedBy  User? @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([incidentId])
+}
+
+model ResidentReport {
+  id          String   @id @default(cuid())
+  trackingCode String  @unique
+  incident    Incident? 
+  barangayId  String?
+  barangay    Barangay? @relation(fields: [barangayId], references: [id], onDelete: SetNull)
+  isAnonymous Boolean  @default(false)
+  contact     String?
+  message     String?
+  latitude    Float?
+  longitude   Float?
+  status      IncidentStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attachments ResidentReportAttachment[]
+
+  @@index([trackingCode])
+  @@index([barangayId])
+}
+
+model ResidentReportAttachment {
+  id              String   @id @default(cuid())
+  residentReportId String
+  residentReport  ResidentReport @relation(fields: [residentReportId], references: [id], onDelete: Cascade)
+  url             String
+  mimeType        String
+  sizeBytes       Int
+  fileName        String
+  createdAt       DateTime @default(now())
+
+  @@index([residentReportId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model SyncRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType String
+  entityId   String
+  clientId   String?
+  operation  String
+  payload    Json?
+  state      SyncState @default(PENDING)
+  error      String?
+  attemptCount Int    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([clientId])
+  @@index([userId, state])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  resourceType String?
+  resourceId   String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  isPublic  Boolean  @default(false)
+  updatedById String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
