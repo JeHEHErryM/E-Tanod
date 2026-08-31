@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { ScrollText, Fingerprint, Globe } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
-import { Card, Badge } from '@e-tanod/ui';
+import { Badge, Spinner, EmptyState } from '@e-tanod/ui';
+import { PageHeader } from '@/app/components/PageHeader';
 
 interface AuditEntry {
   id: string;
@@ -13,6 +15,17 @@ interface AuditEntry {
   actor?: { id: string; username: string; fullName: string } | null;
 }
 
+const actionTone = (action: string) =>
+  action.startsWith('LOGIN') || action.startsWith('LOGOUT')
+    ? 'info'
+    : ['USER_CREATED', 'ROLE_CHANGED'].includes(action)
+    ? 'brand'
+    : action.includes('INCIDENT') && action.includes('CREATED')
+    ? 'warning'
+    : action.includes('DELETED')
+    ? 'danger'
+    : 'default';
+
 export function AuditPage() {
   const { data, isLoading, error } = useQuery<{ data: AuditEntry[]; total: number }>({
     queryKey: ['audit'],
@@ -21,39 +34,64 @@ export function AuditPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-sm text-gray-500">Append-only log of security-sensitive actions</p>
-      </div>
+      <PageHeader
+        title="Audit Logs"
+        description="Append-only log of security-sensitive actions"
+        icon={<ScrollText className="h-5 w-5" />}
+      />
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
+        <div className="flex justify-center py-12">
+          <Spinner className="text-brand-600" />
+        </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{getErrorMessage(error)}</div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {getErrorMessage(error)}
+        </div>
+      ) : (data?.data ?? []).length === 0 ? (
+        <EmptyState
+          icon={<Fingerprint className="h-8 w-8" />}
+          title="No audit entries"
+          description="Security-sensitive actions will be logged here."
+        />
       ) : (
-        <Card>
-          <div className="divide-y divide-gray-100">
-            {data?.data.map((entry) => (
-              <div key={entry.id} className="flex items-start justify-between gap-3 py-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge tone="info">{entry.action}</Badge>
-                    <span className="text-sm font-medium text-gray-800">{entry.actor?.username ?? 'system'}</span>
+        <div className="surface p-5">
+          <ol className="relative space-y-6 border-l border-ink-200 pl-6">
+            {data?.data.map((entry) => {
+              return (
+                <li key={entry.id} className="relative">
+                  <span className="absolute -left-[31px] flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-brand-400 shadow" />                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={actionTone(entry.action)}>{entry.action}</Badge>
+                      {entry.actor ? (
+                        <span className="text-sm font-semibold text-ink-800">
+                          {entry.actor.fullName || entry.actor.username}
+                        </span>
+                      ) : (
+                        <span className="text-sm font-medium text-ink-400">system</span>
+                      )}
+                    </div>
+                    <span className="flex items-center gap-1.5 text-xs text-ink-400">
+                      {entry.ipAddress ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Globe className="h-3 w-3" /> {entry.ipAddress}
+                        </span>
+                      ) : null}
+                      <span className="hidden sm:inline">·</span>
+                      {new Date(entry.createdAt).toLocaleString()}
+                    </span>
                   </div>
                   {entry.resourceType ? (
-                    <div className="mt-1 text-xs text-gray-500">
-                      {entry.resourceType}:{entry.resourceId ?? ''}
+                    <div className="mt-1 font-mono text-xs text-ink-400">
+                      {entry.resourceType}
+                      {entry.resourceId ? `:${entry.resourceId}` : ''}
                     </div>
                   ) : null}
-                </div>
-                <div className="text-right text-xs text-gray-400">
-                  <div>{new Date(entry.createdAt).toLocaleString()}</div>
-                  {entry.ipAddress ? <div>{entry.ipAddress}</div> : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ShieldHalf,
+  MapPin,
+  Play,
+  Square,
+  Clock,
+  CheckCircle2,
+} from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Badge, Card } from '@e-tanod/ui';
+import { Button, Badge, Card, Spinner, EmptyState, Sheet, Textarea } from '@e-tanod/ui';
 import type { PatrolStatus } from '@e-tanod/types';
+import { isAdmin } from '@/app/roles';
+import { patrolStatusTone } from '@/app/badges';
+import { PageHeader } from '@/app/components/PageHeader';
 
 interface Assignment {
   id: string;
@@ -29,19 +40,17 @@ interface ActiveSession {
   checkpointScans: { checkpoint: { name: string }; result: string; scannedAt: string }[];
 }
 
-const statusTone: Record<string, 'default' | 'success' | 'info' | 'warning' | 'danger'> = {
-  ACTIVE: 'success',
-  COMPLETED: 'info',
-  INCOMPLETE: 'warning',
-  SCHEDULED: 'default',
-  CANCELLED: 'danger',
-};
+function formatDate(d: string) {
+  const date = new Date(d + (d.length === 10 ? 'T00:00:00' : ''));
+  return new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+}
 
 export function PatrolPage() {
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.primaryRole === 'SUPER_ADMIN' || user?.primaryRole === 'BARANGAY_ADMIN';
+  const admin = isAdmin(user?.primaryRole);
   const qc = useQueryClient();
   const [notes, setNotes] = useState('');
+  const [endSheetOpen, setEndSheetOpen] = useState(false);
 
   const assignments = useQuery<Assignment[]>({
     queryKey: ['my-assignments'],
@@ -67,106 +76,173 @@ export function PatrolPage() {
       api.post(`/patrol/session/${sessionId}/end`, { notes }).then((r) => r.data),
     onSuccess: () => {
       setNotes('');
+      setEndSheetOpen(false);
       qc.invalidateQueries({ queryKey: ['active-session'] });
       qc.invalidateQueries({ queryKey: ['my-assignments'] });
     },
   });
 
+  const verified = active.data?.checkpointScans.filter((s) => s.result === 'VALID').length ?? 0;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Patrol Management</h1>
-        <p className="text-sm text-gray-500">
-          {isAdmin ? 'Monitor patrol schedules and assignments' : 'Start and monitor your assigned patrols'}
-        </p>
-      </div>
+      <PageHeader
+        title="Patrol"
+        description={admin ? 'Monitor schedules and assignments' : 'Your patrol assignments'}
+        icon={<ShieldHalf className="h-5 w-5" />}
+      />
 
-      {!isAdmin && active.data ? (
-        <Card title="Active Patrol Session">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-base font-semibold text-gray-900">
-                  {active.data.patrolAssignment.patrolSchedule.title}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {active.data.patrolAssignment.patrolSchedule.scheduledDate} ·{' '}
-                  {active.data.patrolAssignment.patrolSchedule.startTime}–
-                  {active.data.patrolAssignment.patrolSchedule.endTime}
-                </div>
-              </div>
-              <Badge tone="success">ACTIVE</Badge>
-            </div>
-
-            <div>
-              <div className="mb-1 text-xs font-medium text-gray-500">Verified checkpoints</div>
-              <div className="flex flex-wrap gap-2">
-                {active.data.checkpointScans.length === 0 ? (
-                  <span className="text-sm text-gray-400">No checkpoints verified yet</span>
-                ) : (
-                  active.data.checkpointScans.map((s) => (
-                    <Badge key={s.scannedAt} tone={s.result === 'VALID' ? 'success' : 'warning'}>
-                      {s.checkpoint.name}
-                    </Badge>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-end gap-3 border-t border-gray-100 pt-3">
-              <div className="flex-1">
-                <label className="mb-1 block text-xs font-medium text-gray-500">End notes</label>
-                <input
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional summary"
-                />
-              </div>
-              <Button variant="danger" onClick={() => endPatrol.mutate(active.data!.id)} disabled={endPatrol.isPending}>
-                End Patrol
-              </Button>
-            </div>
+      {!admin && active.data ? (
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 to-brand-800 p-5 text-sand-50 shadow-panel">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
+              ACTIVE PATROL
+            </span>
+            <Badge tone="success">Live</Badge>
           </div>
+          <div className="mt-4">
+            <h3 className="font-display text-xl font-bold">
+              {active.data.patrolAssignment.patrolSchedule.title}
+            </h3>
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-sand-100/90">
+              <Clock className="h-4 w-4" />
+              {active.data.patrolAssignment.patrolSchedule.startTime} –{' '}
+              {active.data.patrolAssignment.patrolSchedule.endTime}
+            </p>
+          </div>
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+              {verified} verified
+            </div>
+            <Button variant="danger" onClick={() => setEndSheetOpen(true)}>
+              <Square className="h-4 w-4" /> End Patrol
+            </Button>
+          </div>
+        </div>
+      ) : !admin && active.isLoading ? (
+        <Spinner className="text-brand-600" />
+      ) : null}
+
+      {admin && active.data ? (
+        <Card
+          title="Active Session"
+          icon={<MapPin className="h-4 w-4" />}
+          actions={<Badge tone="success">ACTIVE</Badge>}
+        >
+          <p className="text-sm text-ink-600">
+            <span className="font-semibold text-ink-900">
+              {active.data.patrolAssignment.patrolSchedule.title}
+            </span>{' '}
+            · verified {verified} checkpoint(s)
+          </p>
+          <Button variant="danger" size="sm" className="mt-3" onClick={() => setEndSheetOpen(true)}>
+            <Square className="h-4 w-4" /> End
+          </Button>
         </Card>
       ) : null}
 
-      <Card title={isAdmin ? 'All Assignments' : 'My Patrol Assignments'}>
+      <Card
+        title={admin ? 'All Assignments' : 'My Assignments'}
+        icon={<ShieldHalf className="h-4 w-4" />}
+      >
         {assignments.isLoading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
+          <div className="flex justify-center py-8">
+            <Spinner className="text-brand-600" />
+          </div>
         ) : assignments.error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {getErrorMessage(assignments.error)}
           </div>
         ) : (assignments.data ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400">No patrol assignments yet.</p>
+          <EmptyState
+            icon={<ShieldHalf className="h-8 w-8" />}
+            title="No assignments yet"
+            description="You don't have any assigned patrols at the moment."
+          />
         ) : (
-          <div className="space-y-3">
-            {assignments.data!.map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-4">
-                <div>
-                  <div className="font-medium text-gray-800">{a.patrolSchedule.title}</div>
-                  <div className="text-sm text-gray-500">
-                    {a.patrolSchedule.scheduledDate} · {a.patrolSchedule.startTime}–{a.patrolSchedule.endTime}
+          <div className="grid gap-3 md:grid-cols-2">
+            {assignments.data!.map((a) => {
+              const canStart = !admin && a.status === 'SCHEDULED' && !active.data;
+              return (
+                <div
+                  key={a.id}
+                  className="group flex flex-col rounded-2xl border border-ink-100 bg-white p-4 transition-all hover:border-brand-200 hover:shadow-card-hover"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                        <MapPin className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <div className="font-bold text-ink-900">{a.patrolSchedule.title}</div>
+                        <div className="text-xs text-ink-400">{formatDate(a.patrolSchedule.scheduledDate)}</div>
+                      </div>
+                    </div>
+                    <Badge tone={patrolStatusTone(a.status)} dot>
+                      {a.status}
+                    </Badge>
                   </div>
-                  <div className="mt-1 text-xs text-gray-400">
+
+                  <div className="mt-3 flex items-center gap-1.5 text-sm text-ink-500">
+                    <Clock className="h-4 w-4 text-ink-400" />
+                    {a.patrolSchedule.startTime} – {a.patrolSchedule.endTime}
+                  </div>
+
+                  <div className="mt-2 text-xs text-ink-400">
                     {a.patrolSchedule.requiredCheckpoints.length} checkpoints ·{' '}
                     {a.patrolSchedule.requiredCheckpoints.map((c) => c.checkpoint.name).join(', ')}
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge tone={statusTone[a.status] ?? 'default'}>{a.status}</Badge>
-                  {!isAdmin && a.status === 'SCHEDULED' && !active.data ? (
-                    <Button size="sm" onClick={() => startPatrol.mutate(a.id)} disabled={startPatrol.isPending}>
-                      Start Patrol
-                    </Button>
+
+                  {canStart ? (
+                    <div className="mt-4 border-t border-ink-100 pt-3">
+                      <Button
+                        fullWidth
+                        variant="primary"
+                        onClick={() => startPatrol.mutate(a.id)}
+                        disabled={startPatrol.isPending}
+                      >
+                        {startPatrol.isPending ? <Spinner className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        Start Patrol
+                      </Button>
+                    </div>
                   ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
+
+      <Sheet
+        open={endSheetOpen}
+        onClose={() => setEndSheetOpen(false)}
+        title="End patrol"
+        footer={
+          <Button
+            variant="danger"
+            fullWidth
+            size="lg"
+            disabled={endPatrol.isPending}
+            onClick={() => active.data && endPatrol.mutate(active.data.id)}
+          >
+            {endPatrol.isPending ? <Spinner className="h-5 w-5" /> : <Square className="h-5 w-5" />}
+            Confirm End
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-ink-500">Add a summary of this patrol (optional).</p>
+          <Textarea
+            label="End notes"
+            rows={4}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. Completed all checkpoints, no incidents encountered."
+          />
+        </div>
+      </Sheet>
     </div>
   );
 }

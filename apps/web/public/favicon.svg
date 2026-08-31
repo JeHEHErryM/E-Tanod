@@ -1,4 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#284dcc"/>
-  <text x="16" y="22" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">ET</text>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b9d87"/>
+      <stop offset="1" stop-color="#0f3b36"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#g)"/>
+  <path d="M16 5.5 7 9.5v7.4c0 5 3.6 8.9 9 10.6 5.4-1.7 9-5.6 9-10.6V9.5L16 5.5Z" fill="#ffffff"/>
+  <path d="m16 20 3.6-3.6a2.6 2.6 0 0 0-3.6-3.6 2.6 2.6 0 0 0-3.6 3.6L16 20Z" fill="#0f3b36"/>
 </svg>

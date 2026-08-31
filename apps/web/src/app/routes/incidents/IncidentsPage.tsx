@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Siren, Plus, MapPin, Clock, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Badge, Card } from '@e-tanod/ui';
+import { Button, Badge, Card, Spinner, EmptyState, Sheet, Input, Select, Textarea } from '@e-tanod/ui';
 import type { IncidentStatus, IncidentSeverity, PaginatedResult } from '@e-tanod/types';
+import { isAdmin } from '@/app/roles';
+import { incidentStatusTone, incidentSeverityTone } from '@/app/badges';
+import { PageHeader } from '@/app/components/PageHeader';
 
 interface IncidentCategory {
   id: string;
@@ -26,25 +30,20 @@ interface IncidentItem {
   createdBy: { id: string; fullName: string; username: string } | null;
 }
 
-const statusTone: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
-  PENDING: 'warning',
-  VERIFIED: 'info',
-  RESOLVED: 'success',
-  REJECTED: 'danger',
-};
-
-const severityTone: Record<string, 'default' | 'success' | 'warning' | 'danger'> = {
-  LOW: 'default',
-  MEDIUM: 'success',
-  HIGH: 'warning',
-  CRITICAL: 'danger',
+const severityDot: Record<IncidentSeverity, string> = {
+  LOW: 'bg-emerald-400',
+  MEDIUM: 'bg-sky-400',
+  HIGH: 'bg-amber-500',
+  CRITICAL: 'bg-rose-500',
 };
 
 export function IncidentsPage() {
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.primaryRole === 'SUPER_ADMIN' || user?.primaryRole === 'BARANGAY_ADMIN';
+  const admin = isAdmin(user?.primaryRole);
   const canReport = user?.primaryRole === 'TANOD' || user?.primaryRole === 'RESIDENT';
   const qc = useQueryClient();
+  const [reportOpen, setReportOpen] = useState(false);
+  const [filter, setFilter] = useState<IncidentStatus | 'ALL'>('ALL');
 
   const categories = useQuery<IncidentCategory[]>({
     queryKey: ['incident-categories'],
@@ -56,50 +55,121 @@ export function IncidentsPage() {
     queryFn: async () => (await api.get<PaginatedResult<IncidentItem>>('/incidents', { params: { page: 1, pageSize: 50 } })).data,
   });
 
+  const list = (incidents.data?.data ?? []).filter(
+    (i) => filter === 'ALL' || i.status === filter,
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Incidents</h1>
-          <p className="text-sm text-gray-500">{isAdmin ? 'Review and manage reported incidents' : 'Report and track incidents'}</p>
-        </div>
-        {canReport ? <ReportIncidentButton categories={categories.data ?? []} onCreated={() => qc.invalidateQueries({ queryKey: ['incidents'] })} /> : null}
+      <PageHeader
+        title="Incidents"
+        description={admin ? 'Review and manage reported incidents' : 'Report and track incidents'}
+        icon={<Siren className="h-5 w-5" />}
+        actions={
+          canReport ? (
+            <Button onClick={() => setReportOpen(true)}>
+              <Plus className="h-4 w-4" /> Report
+            </Button>
+          ) : null
+        }
+      />
+
+      {/* Status filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {(['ALL', 'PENDING', 'VERIFIED', 'RESOLVED', 'REJECTED'] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              filter === s
+                ? 'border-brand-600 bg-brand-600 text-white'
+                : 'border-ink-200 bg-white text-ink-500 hover:border-brand-300'
+            }`}
+          >
+            {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+          </button>
+        ))}
       </div>
 
-      <Card title="Incident Reports">
-        {incidents.isLoading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : incidents.error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{getErrorMessage(incidents.error)}</div>
-        ) : (incidents.data?.data ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400">No incidents reported yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {incidents.data!.data.map((i) => (
-              <div key={i.id} className="rounded-lg border border-gray-100 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-semibold text-gray-500">{i.code}</span>
-                    <Badge tone={severityTone[i.severity] ?? 'default'}>{i.severity}</Badge>
-                    <Badge tone={statusTone[i.status] ?? 'default'}>{i.status}</Badge>
-                  </div>
-                  <span className="text-xs text-gray-400">{new Date(i.reportedAt).toLocaleString()}</span>
+      {incidents.isLoading ? (
+        <div className="flex justify-center py-12">
+          <Spinner className="text-brand-600" />
+        </div>
+      ) : incidents.error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {getErrorMessage(incidents.error)}
+        </div>
+      ) : list.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Siren className="h-8 w-8" />}
+            title={filter === 'ALL' ? 'No incidents yet' : `No ${filter.toLowerCase()} incidents`}
+            description="Incident reports and updates will appear here."
+            actionLabel={canReport ? 'Report an incident' : undefined}
+            onAction={canReport ? () => setReportOpen(true) : undefined}
+          />
+        </Card>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {list.map((i) => (
+            <article
+              key={i.id}
+              className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-card transition-shadow hover:shadow-card-hover"
+            >
+              <div
+                className="flex items-center justify-between gap-3 border-l-4 px-4 py-3"
+                style={{ borderLeftColor: `var(--sev-${i.severity.toLowerCase()})` }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className={`h-2.5 w-2.5 rounded-full ${severityDot[i.severity]}`} />
+                  <span className="font-mono text-xs font-bold text-ink-400">{i.code}</span>
                 </div>
-                <p className="mt-2 text-sm text-gray-700">{i.description}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                  <span>{i.category.name}</span>
+                <div className="flex items-center gap-2">
+                  <Badge tone={incidentSeverityTone(i.severity)}>{i.severity}</Badge>
+                  <Badge tone={incidentStatusTone(i.status)} dot>
+                    {i.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="px-4 py-3">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                    {i.category.name}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-ink-700">{i.description}</p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {new Date(i.reportedAt).toLocaleString()}
+                  </span>
                   {i.barangay ? <span>· {i.barangay.name}</span> : null}
-                  {i.createdBy ? <span>· reported by {i.createdBy.fullName}</span> : null}
-                  {i.latitude != null && i.longitude != null ? (
-                    <span>· {i.latitude.toFixed(5)}, {i.longitude.toFixed(5)}</span>
+                  {i.createdBy ? <span>· {i.createdBy.fullName}</span> : null}
+                  {i.latitude != null ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {i.latitude.toFixed(4)}, {i.longitude?.toFixed(4)}
+                    </span>
                   ) : null}
                 </div>
-                {isAdmin && i.status === 'PENDING' ? <IncidentActions incident={i} onDone={() => qc.invalidateQueries({ queryKey: ['incidents'] })} /> : null}
+
+                {admin && i.status === 'PENDING' ? <IncidentActions incident={i} onDone={() => qc.invalidateQueries({ queryKey: ['incidents'] })} /> : null}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {canReport ? (
+        <ReportSheet
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          categories={categories.data ?? []}
+          onCreated={() => qc.invalidateQueries({ queryKey: ['incidents'] })}
+        />
+      ) : null}
     </div>
   );
 }
@@ -116,34 +186,38 @@ function IncidentActions({ incident, onDone }: { incident: IncidentItem; onDone:
   });
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
-      <input
+    <div className="mt-4 space-y-2 border-t border-ink-100 pt-3">
+      <Input
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Resolution note (optional)"
-        className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
       />
-      <Button size="sm" variant="secondary" onClick={() => update.mutate('VERIFIED')} disabled={update.isPending}>
-        Verify
-      </Button>
-      <Button size="sm" variant="primary" onClick={() => update.mutate('RESOLVED')} disabled={update.isPending}>
-        Resolve
-      </Button>
-      <Button size="sm" variant="danger" onClick={() => update.mutate('REJECTED')} disabled={update.isPending}>
-        Reject
-      </Button>
+      <div className="grid grid-cols-3 gap-2">
+        <Button size="sm" variant="outline" onClick={() => update.mutate('VERIFIED')} disabled={update.isPending}>
+          <Check className="h-4 w-4" /> Verify
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => update.mutate('RESOLVED')} disabled={update.isPending}>
+          <Check className="h-4 w-4" /> Resolve
+        </Button>
+        <Button size="sm" variant="danger" onClick={() => update.mutate('REJECTED')} disabled={update.isPending}>
+          <X className="h-4 w-4" /> Reject
+        </Button>
+      </div>
     </div>
   );
 }
 
-function ReportIncidentButton({
+function ReportSheet({
+  open,
+  onClose,
   categories,
   onCreated,
 }: {
+  open: boolean;
+  onClose: () => void;
   categories: IncidentCategory[];
   onCreated: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [coords, setCoords] = useState('');
@@ -165,81 +239,61 @@ function ReportIncidentButton({
       return (await api.post('/incidents', { categoryId, description, latitude: lat, longitude: lng })).data;
     },
     onSuccess: () => {
-      setOpen(false);
+      onClose();
       setDescription('');
       setCoords('');
       setCategoryId('');
+      setError(null);
       onCreated();
     },
     onError: (e) => setError(getErrorMessage(e)),
   });
 
   return (
-    <div>
-      <Button onClick={() => setOpen(!open)}>Report Incident</Button>
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">Report an Incident</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                create.mutate();
-              }}
-              className="space-y-3"
-            >
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
-                <select
-                  required
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
-                  <option value="" disabled>
-                    Select category
-                  </option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Coordinates <span className="font-normal text-gray-400">(optional, e.g. 14.5995, 120.9842)</span>
-                </label>
-                <input
-                  value={coords}
-                  onChange={(e) => setCoords(e.target.value)}
-                  placeholder="latitude, longitude"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
-              {error ? <p className="text-sm text-red-600">{error}</p> : null}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={create.isPending}>
-                  Report
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Report an incident"
+      footer={
+        <Button
+          fullWidth
+          size="lg"
+          disabled={create.isPending || !categoryId || !description.trim()}
+          onClick={() => create.mutate()}
+        >
+          {create.isPending ? <Spinner className="h-5 w-5" /> : <Siren className="h-5 w-5" />}
+          Submit report
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <Select label="Category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+          <option value="" disabled>
+            Select category
+          </option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+        <Textarea
+          label="Description"
+          required
+          rows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe what happened…"
+        />
+        <Input
+          label="Coordinates"
+          value={coords}
+          onChange={(e) => setCoords(e.target.value)}
+          placeholder="latitude, longitude (optional)"
+          hint="e.g. 13.2231, 120.5932"
+        />
+        {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+      </div>
+    </Sheet>
   );
 }

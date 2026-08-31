@@ -10,23 +10,29 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'E-Tanod',
+        name: 'E-Tanod — Barangay Security',
         short_name: 'E-Tanod',
-        description: 'GIS-Based Patrol Management and Incident Mapping for Barangay Security',
-        theme_color: '#284dcc',
-        background_color: '#ffffff',
+        description:
+          'GIS-based patrol management and incident mapping for barangay security.',
+        theme_color: '#0f3b36',
+        background_color: '#f6f4ef',
         display: 'standalone',
+        orientation: 'portrait',
         start_url: '/',
+        scope: '/',
+        categories: ['utilities', 'navigation', 'security'],
         icons: [
           {
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any maskable',
           },
         ],
       },

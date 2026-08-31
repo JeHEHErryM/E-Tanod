@@ -1,19 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Users, Search, UserPlus, User } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
-import { Card, Badge, Button } from '@e-tanod/ui';
+import { Card, Badge, Button, Spinner, EmptyState, Sheet, Input, Select } from '@e-tanod/ui';
 import type { UserSummary, PaginatedResult } from '@e-tanod/types';
 import type { RoleName } from '@e-tanod/types';
-
-const roleTone: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
-  SUPER_ADMIN: 'danger',
-  BARANGAY_ADMIN: 'warning',
-  TANOD: 'info',
-  RESIDENT: 'success',
-};
+import { roleMeta } from '@/app/roles';
+import { PageHeader } from '@/app/components/PageHeader';
 
 export function UsersPage() {
   const [search, setSearch] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery<PaginatedResult<UserSummary>>({
@@ -42,142 +39,137 @@ export function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="text-sm text-gray-500">Manage system users and roles</p>
-        </div>
-        <CreateUserButton onCreate={(input) => createUser.mutate(input)} />
-      </div>
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search users..."
-        className="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      <PageHeader
+        title="Users"
+        description="Manage system users and roles"
+        icon={<Users className="h-5 w-5" />}
+        actions={
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4" /> Add User
+          </Button>
+        }
       />
 
+      <div className="relative max-w-md">
+        <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-ink-400">
+          <Search className="h-5 w-5" />
+        </span>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name or username…"
+          className="h-11 w-full rounded-xl border border-ink-200 bg-white pl-10 pr-4 text-sm text-ink-900 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-brand-100"
+        />
+      </div>
+
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading users...</p>
+        <div className="flex justify-center py-12">
+          <Spinner className="text-brand-600" />
+        </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{getErrorMessage(error)}</div>
-      ) : (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {getErrorMessage(error)}
+        </div>
+      ) : (data?.data ?? []).length === 0 ? (
         <Card>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-xs uppercase text-gray-500">
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Username</th>
-                <th className="pb-2">Primary Role</th>
-                <th className="pb-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.data.map((u) => (
-                <tr key={u.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-2 font-medium text-gray-800">{u.fullName}</td>
-                  <td className="py-2 text-gray-600">{u.username}</td>
-                  <td className="py-2">
-                    <Badge tone={roleTone[u.primaryRole] ?? 'default'}>{u.primaryRole}</Badge>
-                  </td>
-                  <td className="py-2">
-                    <Badge tone={u.isActive ? 'success' : 'danger'}>{u.isActive ? 'Active' : 'Inactive'}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <EmptyState
+            icon={<Users className="h-8 w-8" />}
+            title="No users found"
+            description={search ? `No users match "${search}".` : 'No users yet.'}
+          />
         </Card>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {data!.data.map((u) => {
+            const meta = roleMeta(u.primaryRole);
+            return (
+              <div
+                key={u.id}
+                className="flex items-center gap-4 rounded-2xl border border-ink-100 bg-white p-4 shadow-card transition-all hover:border-brand-200 hover:shadow-card-hover"
+              >
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${meta.tint}`}>
+                  <meta.icon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-bold text-ink-900">{u.fullName}</div>
+                  <div className="truncate text-xs text-ink-400">@{u.username}</div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <Badge tone={meta.tone}>{meta.label}</Badge>
+                  <Badge tone={u.isActive ? 'success' : 'danger'} dot>
+                    {u.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
+
+      <CreateUserSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={(input) => {
+          createUser.mutate(input);
+          setCreateOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-function CreateUserButton({ onCreate }: { onCreate: (input: { username: string; password: string; fullName: string; primaryRole: RoleName; roles: RoleName[] }) => void }) {
-  const [open, setOpen] = useState(false);
+function CreateUserSheet({
+  open,
+  onClose,
+  onCreate,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (input: { username: string; password: string; fullName: string; primaryRole: RoleName; roles: RoleName[] }) => void;
+}) {
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<RoleName>('TANOD');
 
   return (
-    <div>
-      <Button onClick={() => setOpen(!open)}>Create User</Button>
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">Create User</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                onCreate({ username, password, fullName, primaryRole: role, roles: [role] });
-                setOpen(false);
-                setUsername('');
-                setFullName('');
-                setPassword('');
-              }}
-              className="space-y-3"
-            >
-              <Field label="Full Name" value={fullName} onChange={setFullName} required />
-              <Field label="Username" value={username} onChange={setUsername} required />
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Primary Role</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as RoleName)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
-                  <option value="TANOD">Tanod</option>
-                  <option value="BARANGAY_ADMIN">Barangay Admin</option>
-                  <option value="RESIDENT">Resident</option>
-                  <option value="SUPER_ADMIN">Super Admin</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Create</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">{label}</label>
-      <input
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-      />
-    </div>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Add new user"
+      footer={
+        <Button
+          fullWidth
+          size="lg"
+          type="submit"
+          form="create-user"
+          disabled={!username || !fullName || password.length < 8}
+        >
+          <UserPlus className="h-5 w-5" /> Create user
+        </Button>
+      }
+    >
+      <form
+        id="create-user"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onCreate({ username, password, fullName, primaryRole: role, roles: [role] });
+          setUsername('');
+          setFullName('');
+          setPassword('');
+        }}
+        className="space-y-4"
+      >
+        <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Juan Dela Cruz" leading={<User className="h-5 w-5" />} />
+        <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="juan.tanod" leading={<Users className="h-5 w-5" />} />
+        <Input label="Temporary password" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Min. 8 characters" />
+        <Select label="Primary role" value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
+          <option value="TANOD">Tanod</option>
+          <option value="BARANGAY_ADMIN">Barangay Admin</option>
+          <option value="RESIDENT">Resident</option>
+          <option value="SUPER_ADMIN">Super Admin</option>
+        </Select>
+      </form>
+    </Sheet>
   );
 }
