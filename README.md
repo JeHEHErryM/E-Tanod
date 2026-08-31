@@ -110,12 +110,24 @@ Details in `docs/architecture/README.md`.
 
 ## Deployment (Railway)
 
-- **E-Tanod Web** — `apps/web` (Vite PWA build)
-- **E-Tanod API** — `apps/api` (NestJS + Prisma migrations)
-- **PostgreSQL** — Railway Postgres service
+This is a shared pnpm + Turborepo monorepo, so each service is configured with a
+per-package `railway.json` (Railway auto-detects these at each package root). Do **not**
+set a Root Directory — Railway uses the workspace-filtered `pnpm --filter` commands:
 
-Set the environment variables per the `.env.example` files and run
-`pnpm --filter @e-tanod/api prisma:deploy` on deploy.
+- **E-Tanod API** — `apps/api/railway.json` (NestJS + Prisma). Builds with
+  `pnpm --filter @e-tanod/api build` (runs `prisma generate && nest build`), runs
+  `prisma migrate deploy` on pre-deploy, and starts with `start:prod`. Healthcheck: `/health`.
+- **E-Tanod Web** — `apps/web/railway.json` (Vite PWA). Builds with
+  `pnpm --filter @e-tanod/web build` and serves `dist` via `serve` on `$PORT`.
+- **PostgreSQL** — add a Railway Postgres service and point `DATABASE_URL` at it.
+
+### Notes
+- The api `postinstall` runs `prisma generate`, so a fresh `pnpm install` produces the
+  generated Prisma client automatically.
+- Never commit a real `.env`. Set variables in Railway per the `.env.example` files
+  (`DATABASE_URL`, `JWT_*` secrets, `CORS_ORIGIN`, `WEB_URL`, `SOCKET_URL`,
+  `MAPBOX_PUBLIC_TOKEN`, `UPLOAD_DIR`, `MAX_UPLOAD_BYTES`).
+- Use `pnpm install --frozen-lockfile` in CI to keep `pnpm-lock.yaml` authoritative.
 
 ## Documentation
 
