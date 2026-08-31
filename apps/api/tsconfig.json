@@ -10,7 +10,6 @@
     "declarationMap": false,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "incremental": true,
     "skipLibCheck": true,
     "strict": true,
     "noImplicitAny": false,
