@@ -130,6 +130,13 @@ async function main() {
 
   // --- Demo Patrol Schedule ---
   const today = new Date().toISOString().slice(0, 10);
+  const existingSchedule = await prisma.patrolSchedule.findFirst({
+    where: { title: 'DEMO Night Patrol', barangayId: barangay.id, scheduledDate: today },
+  });
+  if (existingSchedule) {
+    console.log(`DEMO patrol schedule already exists: ${existingSchedule.id}`);
+    return;
+  }
   const schedule = await prisma.patrolSchedule.create({
     data: {
       title: 'DEMO Night Patrol',
