@@ -8,6 +8,9 @@ import { DashboardPage } from '@/app/routes/dashboard/DashboardPage';
 import { UsersPage } from '@/app/routes/users/UsersPage';
 import { BarangaysPage } from '@/app/routes/barangays/BarangaysPage';
 import { AuditPage } from '@/app/routes/audit/AuditPage';
+import { PatrolPage } from '@/app/routes/patrol/PatrolPage';
+import { ScanPage } from '@/app/routes/scan/ScanPage';
+import { IncidentsPage } from '@/app/routes/incidents/IncidentsPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -46,6 +49,31 @@ export default function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
+
+        <Route
+          path="/patrol"
+          element={
+            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
+              <PatrolPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/scan"
+          element={
+            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
+              <ScanPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/incidents"
+          element={
+            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD', 'RESIDENT']}>
+              <IncidentsPage />
+            </RequireRole>
+          }
+        />
 
         <Route
           path="/users"

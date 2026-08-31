@@ -7,6 +7,10 @@ import { BarangaysModule } from './barangays/barangays.module';
 import { AuditModule } from './audit/audit.module';
 import { HealthModule } from './health/health.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SocketModule } from './socket/socket.module';
+import { PatrolModule } from './patrol/patrol.module';
+import { CheckpointModule } from './checkpoint/checkpoint.module';
+import { IncidentModule } from './incident/incident.module';
 
 @Module({
   imports: [
@@ -18,6 +22,10 @@ import { DashboardModule } from './dashboard/dashboard.module';
     AuditModule,
     HealthModule,
     DashboardModule,
+    SocketModule,
+    PatrolModule,
+    CheckpointModule,
+    IncidentModule,
   ],
 })
 export class AppModule {}

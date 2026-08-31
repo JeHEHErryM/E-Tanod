@@ -4,6 +4,9 @@ import { Badge } from '@e-tanod/ui';
 
 const navItems: { to: string; label: string; roles: string[] }[] = [
   { to: '/', label: 'Dashboard', roles: [] },
+  { to: '/patrol', label: 'Patrol', roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/scan', label: 'Scan Checkpoint', roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/incidents', label: 'Incidents', roles: [] },
   { to: '/users', label: 'Users', roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/barangays', label: 'Barangays', roles: ['SUPER_ADMIN'] },
   { to: '/audit', label: 'Audit Logs', roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },

@@ -294,10 +294,10 @@ model CheckpointQRToken {
 
 model CheckpointScan {
   id              String   @id @default(cuid())
-  checkpointId    String
-  checkpoint      Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Restrict)
-  patrolSessionId String
-  patrolSession   PatrolSession @relation(fields: [patrolSessionId], references: [id], onDelete: Cascade)
+  checkpointId    String?
+  checkpoint      Checkpoint? @relation(fields: [checkpointId], references: [id], onDelete: SetNull)
+  patrolSessionId String?
+  patrolSession   PatrolSession? @relation(fields: [patrolSessionId], references: [id], onDelete: SetNull)
   tanodId         String
   tanod           User @relation(fields: [tanodId], references: [id], onDelete: Restrict)
   latitude        Float?
