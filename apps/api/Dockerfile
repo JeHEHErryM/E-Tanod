@@ -6,6 +6,8 @@
 FROM node:20-slim AS base
 ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH"
 RUN corepack enable
+# Ensure OpenSSL 3 is present and detectable so Prisma loads its query engine.
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 FROM base AS build
 WORKDIR /app
