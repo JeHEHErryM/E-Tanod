@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
+  "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @e-tanod/web... build",
-  "outputDirectory": "apps/web/dist",
+  "buildCommand": "turbo run build --filter=@e-tanod/web...",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
