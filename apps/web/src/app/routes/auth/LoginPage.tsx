@@ -48,7 +48,7 @@ export function LoginPage() {
             <MapPin className="h-3.5 w-3.5" />
             Mamburao, Occidental Mindoro
           </span>
-          <h1 className="mt-6 font-display text-4xl font-bold leading-tight tracking-tight text-balance">
+          <h1 className="mt-6 font-display text-4xl font-black leading-tight tracking-tight text-balance">
             Safer barangays, one patrol at a time.
           </h1>
           <p className="mt-4 text-brand-200/90">
@@ -86,7 +86,7 @@ export function LoginPage() {
             <span className="lg:hidden mb-4">
               <AppLogo size={56} />
             </span>
-            <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">Welcome back</h2>
+            <h2 className="font-display text-2xl font-black tracking-tight text-ink-900">Welcome back</h2>
             <p className="mt-1.5 text-sm text-ink-500">Sign in to continue to your console</p>
           </div>
 

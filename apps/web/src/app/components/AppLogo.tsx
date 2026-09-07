@@ -26,7 +26,7 @@ export function BrandWordmark({ light = false }: { light?: boolean }) {
     <span className="flex items-center gap-2.5">
       <AppLogo size={34} light={light} />
       <span
-        className={`font-display text-xl font-bold tracking-tight ${
+        className={`font-display text-xl font-black tracking-tight ${
           light ? 'text-sand-50' : 'text-ink-900'
         }`}
       >

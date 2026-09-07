@@ -48,7 +48,7 @@ export function BarangaysPage() {
                   {b.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
-              <h3 className="mt-4 font-display text-lg font-bold text-ink-900">{b.name}</h3>
+              <h3 className="mt-4 font-display text-lg font-black text-ink-900">{b.name}</h3>
               <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-ink-400">
                 <MapPin className="h-3.5 w-3.5" />
                 {b.code}

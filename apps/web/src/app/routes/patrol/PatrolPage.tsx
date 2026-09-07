@@ -102,7 +102,7 @@ export function PatrolPage() {
             <Badge tone="success">Live</Badge>
           </div>
           <div className="mt-4">
-            <h3 className="font-display text-xl font-bold">
+            <h3 className="font-display text-xl font-black">
               {active.data.patrolAssignment.patrolSchedule.title}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-sand-100/90">

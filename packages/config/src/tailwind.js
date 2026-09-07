@@ -48,8 +48,12 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['"Fraunces"', 'Georgia', 'serif'],
+        sans: ['Aileron', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Aileron', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      fontWeight: {
+        medium: '600',
+        black: '800',
       },
       boxShadow: {
         card: '0 1px 2px rgba(16, 45, 43, 0.04), 0 4px 16px rgba(16, 45, 43, 0.06)',

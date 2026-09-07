@@ -15,8 +15,7 @@
   }
 
   body {
-    @apply bg-sand-100 text-ink antialiased;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    @apply bg-sand-100 font-sans text-ink antialiased;
   }
 
   :root {

@@ -47,7 +47,7 @@ export function Sheet({ open, onClose, title, children, footer, size = 'md' }: S
       >
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-ink-200 sm:hidden" />
         <div className="flex items-center justify-between border-b border-ink-100 px-5 py-4">
-          <h2 className="text-lg font-bold text-ink-900">{title}</h2>
+          <h2 className="text-lg font-black text-ink-900">{title}</h2>
           <button
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-500 transition-colors hover:bg-ink-100"

@@ -206,7 +206,7 @@ export function ScanPage() {
                 {success ? <CheckCircle2 className="h-6 w-6" /> : <XCircle className="h-6 w-6" />}
               </span>
               <div>
-                <h3 className={`font-display text-lg font-bold ${success ? 'text-emerald-900' : 'text-rose-900'}`}>
+                <h3 className={`font-display text-lg font-black ${success ? 'text-emerald-900' : 'text-rose-900'}`}>
                   {resMeta.title}
                 </h3>
                 {lastResult.checkpoint ? (

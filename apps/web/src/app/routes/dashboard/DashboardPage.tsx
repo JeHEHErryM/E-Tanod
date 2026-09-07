@@ -43,7 +43,7 @@ export function DashboardPage() {
               <role.icon className="h-3.5 w-3.5" />
               {role.label}
             </span>
-            <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+            <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
               {admin ? 'Command Center' : field ? "Maayong adlaw, Tanod." : 'Welcome back'},{' '}
               <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
             </h1>
