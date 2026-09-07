@@ -109,13 +109,18 @@ export function AppLayout() {
 
       {/* Mobile drawer (admin only) */}
       {isMobile && admin ? (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="pointer-events-none fixed inset-0 z-40 md:hidden">
           {drawerOpen ? (
-            <div className="fixed inset-0 bg-ink-950/40" onClick={() => setDrawerOpen(false)} />
+            <div
+              className="pointer-events-auto fixed inset-0 bg-ink-950/40"
+              onClick={() => setDrawerOpen(false)}
+            />
           ) : null}
           <aside
-            className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[82vw] flex-col bg-white shadow-panel transition-transform duration-300 md:hidden ${
-              drawerOpen ? 'translate-x-0' : '-translate-x-full'
+            aria-hidden={!drawerOpen}
+            tabIndex={drawerOpen ? undefined : -1}
+            className={`pointer-events-auto fixed inset-y-0 left-0 z-50 flex w-72 max-w-[82vw] flex-col bg-white shadow-panel transition-[transform,visibility] duration-300 md:hidden ${
+              drawerOpen ? 'visible translate-x-0' : 'invisible -translate-x-full'
             }`}
           >
             <SidebarContent user={user?.primaryRole} onNavigate={() => setDrawerOpen(false)} />
