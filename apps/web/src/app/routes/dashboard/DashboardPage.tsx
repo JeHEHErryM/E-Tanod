@@ -44,7 +44,7 @@ export function DashboardPage() {
               {role.label}
             </span>
             <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
-              {admin ? 'Command Center' : field ? "Maayong adlaw, Tanod." : 'Welcome back'},{' '}
+              {admin ? 'Command Center' : field ? 'Magandang araw, Tanod.' : 'Magandang araw!'},{' '}
               <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
             </h1>
             <p className="mt-2 max-w-lg text-sm text-brand-100/90">

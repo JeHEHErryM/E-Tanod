@@ -44,10 +44,6 @@ export function LoginPage() {
       <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-12 text-sand-50 lg:flex lg:flex-col lg:justify-between">
         <AppLogo size={44} light />
         <div className="relative z-10 max-w-md">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-brand-100 backdrop-blur">
-            <MapPin className="h-3.5 w-3.5" />
-            Mamburao, Occidental Mindoro
-          </span>
           <h1 className="mt-6 font-display text-4xl font-black leading-tight tracking-tight text-balance">
             Safer barangays, one patrol at a time.
           </h1>
@@ -86,8 +82,8 @@ export function LoginPage() {
             <span className="lg:hidden mb-4">
               <AppLogo size={56} />
             </span>
-            <h2 className="font-display text-2xl font-black tracking-tight text-ink-900">Welcome back</h2>
-            <p className="mt-1.5 text-sm text-ink-500">Sign in to continue to your console</p>
+<h2 className="font-display text-2xl font-black tracking-tight text-ink-900">Magandang araw!</h2>
+<p className="mt-1.5 text-sm text-ink-500">Mag-sign in upang magpatuloy sa iyong console</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,7 +93,7 @@ export function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              placeholder="Enter your username"
+              placeholder="Ilagay ang iyong username"
               leading={<User className="h-5 w-5" />}
             />
             <Input
@@ -120,10 +116,10 @@ export function LoginPage() {
             <Button type="submit" disabled={loading} size="lg" fullWidth>
               {loading ? (
                 <>
-                  <Spinner className="h-5 w-5" /> Signing in…
+                  <Spinner className="h-5 w-5" /> Pumapasok…
                 </>
               ) : (
-                'Sign In'
+                'Mag-sign in'
               )}
             </Button>
           </form>
