@@ -1,0 +1,234 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "patrol": "Patrol",
+    "scan": "I-scan",
+    "incidents": "Insidente",
+    "users": "Mga User",
+    "barangays": "Mga Barangay",
+    "audit": "Audit Logs"
+  },
+  "layout": {
+    "barangaySecurity": "Barangay Security Management",
+    "openMenu": "Buksan ang menu",
+    "logout": "Mag-log out"
+  },
+  "role": {
+    "SUPER_ADMIN": "Super Admin",
+    "BARANGAY_ADMIN": "Barangay Admin",
+    "TANOD": "Tanod",
+    "RESIDENT": "Residente"
+  },
+  "roleShort": {
+    "SUPER_ADMIN": "Super Admin",
+    "BARANGAY_ADMIN": "Barangay Admin",
+    "TANOD": "Tanod",
+    "RESIDENT": "Residente"
+  },
+  "status": {
+    "PENDING": "Nakabinbin",
+    "VERIFIED": "Na-verify",
+    "RESOLVED": "Naresolba",
+    "REJECTED": "Tinanggihan"
+  },
+  "severity": {
+    "LOW": "Mababa",
+    "MEDIUM": "Katamtaman",
+    "HIGH": "Mataas",
+    "CRITICAL": "Kritikal"
+  },
+  "patrolStatus": {
+    "ACTIVE": "Aktibo",
+    "COMPLETED": "Natapos",
+    "INCOMPLETE": "Hindi kumpleto",
+    "SCHEDULED": "Naka-iskedyul",
+    "CANCELLED": "Kinansela"
+  },
+  "login": {
+    "heroTitle": "Mas ligtas na barangay, isang patrol sa bawat pagkakataon.",
+    "heroSubtitle": "GIS-based patrol management, secure QR checkpoints, incident mapping, at pag-uulat ng residente — lahat sa isang lugar.",
+    "feat": {
+      "checkpoints": { "label": "Secure QR checkpoints", "sub": "Na-verify sa geofence" },
+      "map": { "label": "Live incident map", "sub": "Real-time na update" },
+      "tracking": { "label": "Pagsubaybay sa patrol", "sub": "Accountable shifts" },
+      "reports": { "label": "Ulat ng residente", "sub": "Alerto ng komunidad" }
+    },
+    "welcome": "Magandang araw!",
+    "subtitle": "Mag-sign in upang magpatuloy sa iyong console",
+    "username": "Username",
+    "password": "Password",
+    "usernamePlaceholder": "Ilagay ang iyong username",
+    "submitting": "Pumapasok…",
+    "submit": "Mag-sign in",
+    "demoTitle": "Mga demo account",
+    "demoPassword": "Password para sa lahat:",
+    "footer": "© {{year}} E-Tanod · Academic capstone / research system"
+  },
+  "dashboard": {
+    "heroAdmin": "Command Center",
+    "heroFieldTanod": "Magandang araw, Tanod.",
+    "heroField": "Magandang araw!",
+    "heroAdminDesc": "Subaybayan ang mga patrol, i-verify ang mga insidente, at pangalagaan ang kaligtasan ng barangay sa real time.",
+    "heroFieldDesc": "Ang iyong mga patrol, checkpoint, at ulat ng insidente — nasa iyong mga kamay.",
+    "scan": "I-scan",
+    "report": "Mag-ulat",
+    "qaTitle": "Mabilisang kilos",
+    "qa": {
+      "patrol": { "label": "Patrol", "desc": "Magsimula o tingnan ang mga patrol" },
+      "scan": { "label": "I-scan", "desc": "I-verify ang mga checkpoint" },
+      "incidents": { "label": "Insidente", "desc": "Mag-ulat o tumingin" },
+      "report": { "label": "Mag-ulat", "desc": "Ipaulat ang insidente" },
+      "track": { "label": "Insidente", "desc": "Sundan ang mga ulat" }
+    },
+    "stats": {
+      "activePatrols": "Aktibong Patrol",
+      "completedPatrols": "Nakumpletong Patrol",
+      "todayIncidents": "Insidente ngayong Araw",
+      "openReports": "Bukas na Ulat",
+      "missedCheckpoints": "Nakaligtaang Checkpoint"
+    },
+    "homeTitle": "Iyong tahanan",
+    "homeDesc": "Naka-log in ka bilang {{role}}. I-explore ang iyong dashboard upang pamahalaan ang mga patrol, checkpoint, insidente, at ulat ng komunidad."
+  },
+  "patrol": {
+    "title": "Patrol",
+    "adminDesc": "Subaybayan ang mga iskedyul at assignment",
+    "fieldDesc": "Ang iyong mga patrol assignment",
+    "activeBanner": "AKTIBONG PATROL",
+    "live": "Live",
+    "verified": "{{count}} na-verify",
+    "verifiedCheckpoints": "· {{count}} na-verify na checkpoint",
+    "end": "Tapusin ang Patrol",
+    "endShort": "Tapusin",
+    "adminActiveTitle": "Aktibong Session",
+    "active": "AKTIBO",
+    "allAssignments": "Lahat ng Assignment",
+    "myAssignments": "Aking mga Assignment",
+    "emptyTitle": "Wala pang assignment",
+    "emptyDesc": "Wala kang atribuadong patrol sa ngayon.",
+    "start": "Simulan ang Patrol",
+    "checkpoints": "{{count}} checkpoint",
+    "endSheetTitle": "Tapusin ang patrol",
+    "endNotes": "Mga tala",
+    "endHint": "Magdagdag ng buod ng patrol na ito (opsyonal).",
+    "endPlaceholder": "Hal. Nakumpleto ang lahat ng checkpoint, walang nangyaring insidente.",
+    "confirmEnd": "Kumpirmahin ang Pagtatapos"
+  },
+  "scan": {
+    "title": "I-scan ang Checkpoint",
+    "tanodDesc": "I-verify ang checkpoint habang nagpapatrol",
+    "adminDesc": "Pag-verify ng checkpoint",
+    "activePatrol": "Aktibong patrol",
+    "verified": "na-verify {{count}}",
+    "needsActive": "Kailangan mo ng aktibong patrol upang i-scan ang mga checkpoint. Simulan ito sa Patrol page.",
+    "locationCaptured": "Nakuha ang lokasyon",
+    "locationRequired": "Kinakailangan ang lokasyon",
+    "captureLocation": "Kunin ang aking lokasyon",
+    "locating": "Hinahanap…",
+    "qrToken": "QR token",
+    "qrPlaceholder": "Idikit ang na-scan na QR value (hal. qr_cp_001)",
+    "verify": "I-verify ang Checkpoint",
+    "onlyTanod": "Tanging isang tanod na may aktibong patrol ang makakapag-verify ng checkpoint.",
+    "scannedAt": "Na-scan noong {{time}}",
+    "result": {
+      "VALID": { "title": "Na-verify ang checkpoint", "desc": "Tumugma ang lokasyon sa loob ng radius ng geofence." },
+      "DUPLICATE": { "title": "Na-scan na", "desc": "Na-verify na ang checkpoint na ito sa session na ito." },
+      "NOT_IN_PATROL": { "title": "Wala sa iyong patrol", "desc": "Hindi kasama ang checkpoint na ito sa iyong itinakdang ruta." },
+      "INACTIVE": { "title": "Hindi aktibo ang checkpoint", "desc": "Kasalukuyang hindi aktibo ang checkpoint na ito." },
+      "LOCATION_UNAVAILABLE": { "title": "Hindi makuha ang lokasyon", "desc": "Hindi namin matukoy nang wasto ang iyong lokasyon." },
+      "OUTSIDE_RADIUS": { "title": "Sa labas ng geofence", "desc": "Masyado kang malayo sa checkpoint na ito upang i-verify." },
+      "INVALID": { "title": "Di-wastong token", "desc": "Hindi ma-tugma ang QR token na ito sa isang checkpoint." }
+    }
+  },
+  "incidents": {
+    "title": "Insidente",
+    "adminDesc": "Balikan at pangasiwaan ang mga naiulat na insidente",
+    "fieldDesc": "Mag-ulat at subaybayan ang mga insidente",
+    "report": "Mag-ulat",
+    "all": "Lahat",
+    "emptyTitle": "Wala pang insidente",
+    "emptyFiltered": "Walang {{status}} na insidente",
+    "emptyDesc": "Lalabas dito ang mga ulat at update ng insidente.",
+    "emptyAction": "Mag-ulat ng insidente",
+    "residentEmptyTitle": "Mag-ulat ng insidente",
+    "residentEmptyDesc": "Maaaring mag-ulat ng insidente ang mga residente. Babalikan at rerespondihan ng barangay ang iyong ulat.",
+    "notePlaceholder": "Tala sa resolusyon (opsyonal)",
+    "verify": "I-verify",
+    "resolve": "Resolbahin",
+    "reject": "Tanggihan",
+    "sheetTitle": "Mag-ulat ng insidente",
+    "submit": "Ipasa ang ulat",
+    "category": "Kategorya",
+    "categorySelect": "Pumili ng kategorya",
+    "description": "Paglalarawan",
+    "descPlaceholder": "Ilarawan ang nangyari…",
+    "coords": "Mga Coordinate",
+    "coordsPlaceholder": "latitude, longitude (opsyonal)",
+    "coordsHint": "Hal. 13.2231, 120.5932",
+    "coordsError": "Ang mga coordinate ay dapat \"latitude, longitude\""
+  },
+  "users": {
+    "title": "Mga User",
+    "desc": "Pamahalaan ang mga user at tungkulin",
+    "add": "Magdagdag ng User",
+    "searchPlaceholder": "Maghanap ayon sa pangalan o username…",
+    "emptyTitle": "Walang nahanap na user",
+    "emptySearch": "Walang user na tumutugma sa \"{{search}}\".",
+    "emptyAll": "Wala pang user.",
+    "active": "Aktibo",
+    "inactive": "Hindi aktibo",
+    "createTitle": "Magdagdag ng bagong user",
+    "create": "Gumawa ng user",
+    "fullName": "Buong pangalan",
+    "fullNamePlaceholder": "Juan Dela Cruz",
+    "username": "Username",
+    "usernamePlaceholder": "juan.tanod",
+    "tempPassword": "Pansamantalang password",
+    "passwordHint": "Min. 8 character",
+    "primaryRole": "Pangunahing tungkulin"
+  },
+  "barangays": {
+    "title": "Mga Barangay",
+    "desc": "Pamahalaan ang mga rekord ng barangay",
+    "emptyTitle": "Walang barangay",
+    "emptyDesc": "Wala pang rekord ng barangay."
+  },
+  "audit": {
+    "title": "Audit Logs",
+    "desc": "Talaang hindi mababago ng mga sensitibong aksyon",
+    "emptyTitle": "Walang audit entry",
+    "emptyDesc": "Itatala dito ang mga sensitibong aksyon sa seguridad.",
+    "system": "sistema"
+  },
+  "error": {
+    "title": "May naganap na error",
+    "desc": "May hindi inaasahang error habang binubuo ang view na ito.",
+    "info": "Ligtas ang iyong data. Subukang i-reload ang pahina.",
+    "reload": "I-reload ang pahina"
+  },
+  "landing": {
+    "badge": "Barangay Security Platform",
+    "heroDesc": "GIS-based patrol management, secure QR checkpoints, incident mapping, at pag-uulat ng residente — lahat sa isang lugar.",
+    "ctaSignIn": "Mag-sign in",
+    "ctaFeatures": "Tingnan ang mga feature",
+    "featuresTitle": "Lahat ng kailangan ng iyong barangay",
+    "featuresDesc": "Idinisenyo para sa mga tanod at opisyal ng barangay, pinapanatili ng E-Tanod na accountable ang mga patrol at nakikita ang mga insidente sa real time.",
+    "feat": {
+      "checkpoints": { "title": "Secure QR checkpoints", "desc": "Geofence-verified na patrol checkpoint na nagpapanatili ng accountability sa bawat shift." },
+      "map": { "title": "Live incident map", "desc": "GIS-based na pag-uulat ng insidente na may real-time na status update." },
+      "patrol": { "title": "Pagsubaybay sa patrol", "desc": "Real-time na patrol session na may verifiable scan records." },
+      "reports": { "title": "Mga ulat ng residente", "desc": "Maaaring mag-ulat ng insidente ang mga miyembro ng komunidad sa ilang segundo." }
+    },
+    "installTitle": "I-install sa iyong device",
+    "installDesc": "Idagdag ang E-Tanod sa iyong home screen para sa mabilis, full-screen, at offline-ready na karanasan.",
+    "installAndroid": "Android: buksan ang menu ng browser, pagkatapos ay i-tap ang \"Add to Home screen\".",
+    "installIos": "iPhone o iPad: i-tap ang Share button, pagkatapos ang \"Add to Home Screen\".",
+    "installDesktop": "Desktop: i-click ang install icon sa address bar.",
+    "installButton": "I-install ang app",
+    "contactTitle": "Makipag-ugnayan sa amin",
+    "contactDesc": "Ang E-Tanod ay binuo bilang akademikong capstone research system. Para sa mga katanungan o feedback:",
+    "contactCta": "Magpadala ng email",
+    "footerTag": "Seguridad ng Barangay · Real-time patrol at pamamahala ng insidente",
+    "demoHint": "Maaari kang mag-sign in gamit ang mga demo account na makikita sa sign-in page."
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "patrol": "Patrol",
+    "scan": "Scan",
+    "incidents": "Incidents",
+    "users": "Users",
+    "barangays": "Barangays",
+    "audit": "Audit Logs"
+  },
+  "layout": {
+    "barangaySecurity": "Barangay Security Management",
+    "openMenu": "Open menu",
+    "logout": "Log out"
+  },
+  "role": {
+    "SUPER_ADMIN": "Super Admin",
+    "BARANGAY_ADMIN": "Barangay Admin",
+    "TANOD": "Tanod",
+    "RESIDENT": "Resident"
+  },
+  "roleShort": {
+    "SUPER_ADMIN": "Super Admin",
+    "BARANGAY_ADMIN": "Barangay Admin",
+    "TANOD": "Tanod",
+    "RESIDENT": "Resident"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "VERIFIED": "Verified",
+    "RESOLVED": "Resolved",
+    "REJECTED": "Rejected"
+  },
+  "severity": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "CRITICAL": "Critical"
+  },
+  "patrolStatus": {
+    "ACTIVE": "Active",
+    "COMPLETED": "Completed",
+    "INCOMPLETE": "Incomplete",
+    "SCHEDULED": "Scheduled",
+    "CANCELLED": "Cancelled"
+  },
+  "login": {
+    "heroTitle": "Safer barangays, one patrol at a time.",
+    "heroSubtitle": "GIS-based patrol management, secure QR checkpoints, incident mapping, and resident reporting — all in one place.",
+    "feat": {
+      "checkpoints": { "label": "Secure QR checkpoints", "sub": "Geofence-verified" },
+      "map": { "label": "Live incident map", "sub": "Real-time updates" },
+      "tracking": { "label": "Patrol tracking", "sub": "Accountable shifts" },
+      "reports": { "label": "Resident reports", "sub": "Community alerts" }
+    },
+    "welcome": "Good day!",
+    "subtitle": "Sign in to continue to your console",
+    "username": "Username",
+    "password": "Password",
+    "usernamePlaceholder": "Enter your username",
+    "submitting": "Signing in…",
+    "submit": "Sign in",
+    "demoTitle": "Demo accounts",
+    "demoPassword": "Password for all:",
+    "footer": "© {{year}} E-Tanod · Academic capstone / research system"
+  },
+  "dashboard": {
+    "heroAdmin": "Command Center",
+    "heroFieldTanod": "Good day, Tanod.",
+    "heroField": "Good day!",
+    "heroAdminDesc": "Monitor patrols, verify incidents, and keep your barangay safe in real time.",
+    "heroFieldDesc": "Your patrols, checkpoints, and incident reports — right at your fingertips.",
+    "scan": "Scan",
+    "report": "Report",
+    "qaTitle": "Quick actions",
+    "qa": {
+      "patrol": { "label": "Patrol", "desc": "Start or view patrols" },
+      "scan": { "label": "Scan", "desc": "Verify checkpoints" },
+      "incidents": { "label": "Incidents", "desc": "Report or track" },
+      "report": { "label": "Report", "desc": "Ipaulat ang insidente" },
+      "track": { "label": "Incidents", "desc": "Sundan ang mga ulat" }
+    },
+    "stats": {
+      "activePatrols": "Active Patrols",
+      "completedPatrols": "Completed Patrols",
+      "todayIncidents": "Today's Incidents",
+      "openReports": "Open Reports",
+      "missedCheckpoints": "Missed Checkpoints"
+    },
+    "homeTitle": "Your home",
+    "homeDesc": "You are logged in as {{role}}. Explore your dashboard to manage patrols, checkpoints, incidents, and community reports."
+  },
+  "patrol": {
+    "title": "Patrol",
+    "adminDesc": "Monitor schedules and assignments",
+    "fieldDesc": "Your patrol assignments",
+    "activeBanner": "ACTIVE PATROL",
+    "live": "Live",
+    "verified": "{{count}} verified",
+    "verifiedCheckpoints": "· verified {{count}} checkpoint(s)",
+    "end": "End Patrol",
+    "endShort": "End",
+    "adminActiveTitle": "Active Session",
+    "active": "ACTIVE",
+    "allAssignments": "All Assignments",
+    "myAssignments": "My Assignments",
+    "emptyTitle": "No assignments yet",
+    "emptyDesc": "You don't have any assigned patrols at the moment.",
+    "start": "Start Patrol",
+    "checkpoints": "{{count}} checkpoints",
+    "endSheetTitle": "End patrol",
+    "endNotes": "End notes",
+    "endHint": "Add a summary of this patrol (optional).",
+    "endPlaceholder": "e.g. Completed all checkpoints, no incidents encountered.",
+    "confirmEnd": "Confirm End"
+  },
+  "scan": {
+    "title": "Scan Checkpoint",
+    "tanodDesc": "Verify a checkpoint during your patrol",
+    "adminDesc": "Checkpoint verification",
+    "activePatrol": "Active patrol",
+    "verified": "verified {{count}}",
+    "needsActive": "You need an active patrol to scan checkpoints. Start one from the Patrol page.",
+    "locationCaptured": "Location captured",
+    "locationRequired": "Location required",
+    "captureLocation": "Capture my location",
+    "locating": "Locating…",
+    "qrToken": "QR token",
+    "qrPlaceholder": "Paste scanned QR value (e.g. qr_cp_001)",
+    "verify": "Verify Checkpoint",
+    "onlyTanod": "Only an active patrol tanod can verify a checkpoint.",
+    "scannedAt": "Scanned at {{time}}",
+    "result": {
+      "VALID": { "title": "Checkpoint verified", "desc": "Location matched within the geofence radius." },
+      "DUPLICATE": { "title": "Already scanned", "desc": "This checkpoint was already verified in this session." },
+      "NOT_IN_PATROL": { "title": "Not in your patrol", "desc": "This checkpoint is not part of your assigned route." },
+      "INACTIVE": { "title": "Checkpoint inactive", "desc": "This checkpoint is currently inactive." },
+      "LOCATION_UNAVAILABLE": { "title": "Location unavailable", "desc": "We could not determine your location accurately." },
+      "OUTSIDE_RADIUS": { "title": "Outside geofence", "desc": "You are too far from this checkpoint to verify it." },
+      "INVALID": { "title": "Invalid token", "desc": "This QR token could not be matched to a checkpoint." }
+    }
+  },
+  "incidents": {
+    "title": "Incidents",
+    "adminDesc": "Review and manage reported incidents",
+    "fieldDesc": "Report and track incidents",
+    "report": "Report",
+    "all": "All",
+    "emptyTitle": "No incidents yet",
+    "emptyFiltered": "No {{status}} incidents",
+    "emptyDesc": "Incident reports and updates will appear here.",
+    "emptyAction": "Report an incident",
+    "residentEmptyTitle": "Report an incident",
+    "residentEmptyDesc": "Residents can report incidents. The barangay will review and respond to your report.",
+    "notePlaceholder": "Resolution note (optional)",
+    "verify": "Verify",
+    "resolve": "Resolve",
+    "reject": "Reject",
+    "sheetTitle": "Report an incident",
+    "submit": "Submit report",
+    "category": "Category",
+    "categorySelect": "Select category",
+    "description": "Description",
+    "descPlaceholder": "Describe what happened…",
+    "coords": "Coordinates",
+    "coordsPlaceholder": "latitude, longitude (optional)",
+    "coordsHint": "e.g. 13.2231, 120.5932",
+    "coordsError": "Coordinates must be \"latitude, longitude\""
+  },
+  "users": {
+    "title": "Users",
+    "desc": "Manage system users and roles",
+    "add": "Add User",
+    "searchPlaceholder": "Search by name or username…",
+    "emptyTitle": "No users found",
+    "emptySearch": "No users match \"{{search}}\".",
+    "emptyAll": "No users yet.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "createTitle": "Add new user",
+    "create": "Create user",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Juan Dela Cruz",
+    "username": "Username",
+    "usernamePlaceholder": "juan.tanod",
+    "tempPassword": "Temporary password",
+    "passwordHint": "Min. 8 characters",
+    "primaryRole": "Primary role"
+  },
+  "barangays": {
+    "title": "Barangays",
+    "desc": "Manage barangay records",
+    "emptyTitle": "No barangays",
+    "emptyDesc": "No barangay records exist yet."
+  },
+  "audit": {
+    "title": "Audit Logs",
+    "desc": "Append-only log of security-sensitive actions",
+    "emptyTitle": "No audit entries",
+    "emptyDesc": "Security-sensitive actions will be logged here.",
+    "system": "system"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "desc": "An unexpected error occurred while rendering this view.",
+    "info": "Your data is safe. Try reloading the page.",
+    "reload": "Reload page"
+  },
+  "landing": {
+    "badge": "Barangay Security Platform",
+    "heroDesc": "GIS-based patrol management, secure QR checkpoints, incident mapping, and resident reporting — all in one place.",
+    "ctaSignIn": "Sign in",
+    "ctaFeatures": "See features",
+    "featuresTitle": "Everything your barangay needs",
+    "featuresDesc": "Built for tanods and barangay officials, E-Tanod keeps patrols accountable and incidents visible in real time.",
+    "feat": {
+      "checkpoints": { "title": "Secure QR checkpoints", "desc": "Geofence-verified patrol checkpoints that keep every shift accountable." },
+      "map": { "title": "Live incident map", "desc": "GIS-based incident reporting with real-time status updates." },
+      "patrol": { "title": "Patrol tracking", "desc": "Real-time patrol sessions with verifiable scan records." },
+      "reports": { "title": "Resident reports", "desc": "Community members can report incidents in seconds." }
+    },
+    "installTitle": "Install on your device",
+    "installDesc": "Add E-Tanod to your home screen for a fast, full-screen, offline-ready experience.",
+    "installAndroid": "Android: open the browser menu, then tap \"Add to Home screen\".",
+    "installIos": "iPhone or iPad: tap the Share button, then \"Add to Home Screen\".",
+    "installDesktop": "Desktop: click the install icon in the address bar.",
+    "installButton": "Install app",
+    "contactTitle": "Contact us",
+    "contactDesc": "E-Tanod is developed as an academic capstone research system. For questions or feedback:",
+    "contactCta": "Send an email",
+    "footerTag": "Barangay Security · Real-time patrol & incident management",
+    "demoHint": "You can sign in with the demo accounts shown on the sign-in page."
+  }
+}
