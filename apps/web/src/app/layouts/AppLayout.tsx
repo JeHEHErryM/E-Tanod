@@ -145,8 +145,8 @@ export function AppLayout() {
               </button>
             ) : null}
             {isMobile ? (
-              <span className="md:hidden">
-                <BrandWordmark />
+              <span className="flex items-center md:hidden">
+                <BrandWordmark size={44} />
               </span>
             ) : (
               <span className="hidden text-sm font-medium text-ink-400 md:block">
@@ -177,7 +177,7 @@ export function AppLayout() {
 
         {/* Main content */}
         <main
-          className={`flex-1 ${useBottomTabs ? 'pb-24' : 'pb-10'} mx-auto w-full max-w-7xl px-4 pt-6 md:px-6 md:pt-8`}
+          className={`flex-1 ${useBottomTabs ? 'pb-28' : 'pb-10'} mx-auto w-full max-w-7xl px-4 pt-6 md:px-6 md:pt-8`}
         >
           <Outlet />
         </main>
@@ -188,14 +188,14 @@ export function AppLayout() {
             className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-100 bg-white/95 pb-safe backdrop-blur-md md:hidden"
             aria-label="Primary"
           >
-            <div className="mx-auto flex h-16 max-w-md items-stretch">
+            <div className="mx-auto flex h-[4.25rem] max-w-md items-stretch px-2">
               {NAV_ITEMS.filter((i) => visibleFor(user?.primaryRole, i) && BOTTOM_TABS.includes(i.to)).map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors ${
+                    `group relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors ${
                       isActive ? 'text-brand-700' : 'text-ink-400'
                     }`
                   }
@@ -203,11 +203,13 @@ export function AppLayout() {
                   {({ isActive }) => (
                     <>
                       <span
-                        className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors ${
-                          isActive ? 'bg-brand-50 text-brand-700' : ''
+                        className={`flex h-8 w-14 items-center justify-center rounded-full transition-all duration-200 ${
+                          isActive
+                            ? 'bg-brand-600 text-white shadow-soft shadow-brand-900/25'
+                            : 'bg-transparent text-ink-400 group-hover:text-ink-600'
                         }`}
                       >
-                        <item.icon className="h-5 w-5" />
+                        <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} />
                       </span>
                       {item.label}
                     </>

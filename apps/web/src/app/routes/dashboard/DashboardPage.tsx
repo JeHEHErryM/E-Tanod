@@ -13,6 +13,7 @@ import {
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
 import { Card, Badge, Stat, CardSkeleton, Button } from '@e-tanod/ui';
+import { AppLogo } from '@/app/components/AppLogo';
 import type { DashboardStats } from '@e-tanod/types';
 import { isAdmin, isField, roleMeta } from '@/app/roles';
 
@@ -20,7 +21,19 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const admin = isAdmin(user?.primaryRole);
   const field = isField(user?.primaryRole);
+  const isTanod = user?.primaryRole === 'TANOD';
   const role = roleMeta(user?.primaryRole);
+
+  const quickActions = isTanod
+    ? [
+        { label: 'Patrol', desc: 'Start or view patrols', icon: ShieldHalf, to: '/patrol', tint: 'bg-sky-50 text-sky-700' },
+        { label: 'Scan', desc: 'Verify checkpoints', icon: QrCode, to: '/scan', tint: 'bg-brand-50 text-brand-700' },
+        { label: 'Incidents', desc: 'Report or track', icon: Siren, to: '/incidents', tint: 'bg-rose-50 text-rose-700' },
+      ]
+    : [
+        { label: 'Report', desc: 'Ipaulat ang insidente', icon: Plus, to: '/incidents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
+        { label: 'Incidents', desc: 'Sundan ang mga ulat', icon: Siren, to: '/incidents', tint: 'bg-brand-50 text-brand-700' },
+      ];
 
   const { data, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ['dashboard'],
@@ -38,20 +51,23 @@ export function DashboardPage() {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-6 text-sand-50 shadow-panel sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
-              <role.icon className="h-3.5 w-3.5" />
-              {role.label}
-            </span>
-            <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
-              {admin ? 'Command Center' : field ? 'Magandang araw, Tanod.' : 'Magandang araw!'},{' '}
-              <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
-            </h1>
-            <p className="mt-2 max-w-lg text-sm text-brand-100/90">
-              {admin
-                ? 'Monitor patrols, verify incidents, and keep your barangay safe in real time.'
-                : 'Your patrols, checkpoints, and incident reports — right at your fingertips.'}
-            </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <AppLogo size={64} light />
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
+                <role.icon className="h-3.5 w-3.5" />
+                {role.label}
+              </span>
+              <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
+                {admin ? 'Command Center' : field ? 'Magandang araw, Tanod.' : 'Magandang araw!'},{' '}
+                <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
+              </h1>
+              <p className="mt-2 max-w-lg text-sm text-brand-100/90">
+                {admin
+                  ? 'Monitor patrols, verify incidents, and keep your barangay safe in real time.'
+                  : 'Your patrols, checkpoints, and incident reports — right at your fingertips.'}
+              </p>
+            </div>
           </div>
           {field ? (
             <div className="flex shrink-0 gap-2.5">
@@ -92,11 +108,7 @@ export function DashboardPage() {
       ) : field ? (
         <Card title="Quick actions" icon={<Layers className="h-4 w-4" />}>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Patrol', desc: 'Start or view patrols', icon: ShieldHalf, to: '/patrol', tint: 'bg-sky-50 text-sky-700' },
-              { label: 'Scan', desc: 'Verify checkpoints', icon: QrCode, to: '/scan', tint: 'bg-brand-50 text-brand-700' },
-              { label: 'Incidents', desc: 'Report or track', icon: Siren, to: '/incidents', tint: 'bg-rose-50 text-rose-700' },
-            ].map((q) => (
+            {quickActions.map((q) => (
               <QuickAction key={q.label} {...q} />
             ))}
           </div>
@@ -119,17 +131,19 @@ function QuickAction({
   icon: Icon,
   to,
   tint,
+  state,
 }: {
   label: string;
   desc: string;
   icon: typeof ShieldHalf;
   to: string;
   tint: string;
+  state?: Record<string, unknown>;
 }) {
   const navigate = useNavigate();
   return (
     <button
-      onClick={() => navigate(to)}
+      onClick={() => navigate(to, { state })}
       className="flex items-start gap-3 rounded-2xl border border-ink-100 bg-white p-4 text-left transition-all hover:border-brand-200 hover:shadow-card-hover"
     >
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tint}`}>

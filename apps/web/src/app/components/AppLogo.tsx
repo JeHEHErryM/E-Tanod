@@ -25,6 +25,27 @@ export function AppLogo({
   );
 }
 
-export function BrandWordmark({ light = false }: { light?: boolean }) {
-  return <AppLogo size={36} light={light} />;
+export function BrandWordmark({
+  light = false,
+  size = 36,
+  showText = true,
+}: {
+  light?: boolean;
+  size?: number;
+  showText?: boolean;
+}) {
+  return (
+    <span className="flex min-w-0 items-center gap-2.5">
+      <AppLogo size={size} light={light} />
+      {showText ? (
+        <span
+          className={`font-display text-lg font-black tracking-tight ${
+            light ? 'text-sand-50' : 'text-ink-900'
+          }`}
+        >
+          E-Tanod
+        </span>
+      ) : null}
+    </span>
+  );
 }

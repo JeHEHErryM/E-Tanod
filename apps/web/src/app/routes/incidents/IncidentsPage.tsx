@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { Siren, Plus, MapPin, Clock, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
@@ -44,6 +45,14 @@ export function IncidentsPage() {
   const qc = useQueryClient();
   const [reportOpen, setReportOpen] = useState(false);
   const [filter, setFilter] = useState<IncidentStatus | 'ALL'>('ALL');
+  const location = useLocation();
+
+  useEffect(() => {
+    if (canReport && (location.state as { openReport?: boolean } | null)?.openReport) {
+      setReportOpen(true);
+      window.history.replaceState({}, '');
+    }
+  }, [canReport, location.state]);
 
   const categories = useQuery<IncidentCategory[]>({
     queryKey: ['incident-categories'],
