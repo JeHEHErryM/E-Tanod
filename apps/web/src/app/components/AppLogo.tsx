@@ -1,4 +1,4 @@
-const LOGO_ASPECT = 1408 / 768;
+const LOGO_ASPECT = 1;
 
 export function AppLogo({
   size = 40,
@@ -16,7 +16,7 @@ export function AppLogo({
       aria-hidden="true"
     >
       <img
-        src="/E_TanodLogo.jfif"
+        src="/e_tanod_logo.jfif"
         alt="E-Tanod"
         className="h-full w-full object-cover"
         style={{ height: size, width: Math.round(size * LOGO_ASPECT) }}
