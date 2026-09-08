@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Siren, Plus, MapPin, Clock, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
@@ -9,6 +10,7 @@ import type { IncidentStatus, IncidentSeverity, PaginatedResult } from '@e-tanod
 import { isAdmin } from '@/app/roles';
 import { incidentStatusTone, incidentSeverityTone } from '@/app/badges';
 import { PageHeader } from '@/app/components/PageHeader';
+import { formatDateTime } from '@/app/lib/format';
 
 interface IncidentCategory {
   id: string;
@@ -39,8 +41,10 @@ const severityDot: Record<IncidentSeverity, string> = {
 };
 
 export function IncidentsPage() {
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const admin = isAdmin(user?.primaryRole);
+  const isResident = user?.primaryRole === 'RESIDENT';
   const canReport = user?.primaryRole === 'TANOD' || user?.primaryRole === 'RESIDENT';
   const qc = useQueryClient();
   const [reportOpen, setReportOpen] = useState(false);
@@ -62,6 +66,7 @@ export function IncidentsPage() {
   const incidents = useQuery<PaginatedResult<IncidentItem>>({
     queryKey: ['incidents'],
     queryFn: async () => (await api.get<PaginatedResult<IncidentItem>>('/incidents', { params: { page: 1, pageSize: 50 } })).data,
+    enabled: !isResident,
   });
 
   const list = (incidents.data?.data ?? []).filter(
@@ -71,13 +76,13 @@ export function IncidentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Incidents"
-        description={admin ? 'Review and manage reported incidents' : 'Report and track incidents'}
+        title={t('incidents.title')}
+        description={admin ? t('incidents.adminDesc') : t('incidents.fieldDesc')}
         icon={<Siren className="h-5 w-5" />}
         actions={
           canReport ? (
             <Button onClick={() => setReportOpen(true)}>
-              <Plus className="h-4 w-4" /> Report
+              <Plus className="h-4 w-4" /> {t('incidents.report')}
             </Button>
           ) : null
         }
@@ -95,7 +100,7 @@ export function IncidentsPage() {
                 : 'border-ink-200 bg-white text-ink-500 hover:border-brand-300'
             }`}
           >
-            {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+            {s === 'ALL' ? t('incidents.all') : t(`status.${s}`)}
           </button>
         ))}
       </div>
@@ -112,9 +117,9 @@ export function IncidentsPage() {
         <Card>
           <EmptyState
             icon={<Siren className="h-8 w-8" />}
-            title={filter === 'ALL' ? 'No incidents yet' : `No ${filter.toLowerCase()} incidents`}
-            description="Incident reports and updates will appear here."
-            actionLabel={canReport ? 'Report an incident' : undefined}
+            title={isResident ? t('incidents.residentEmptyTitle') : filter === 'ALL' ? t('incidents.emptyTitle') : t('incidents.emptyFiltered', { status: t(`status.${filter}`) })}
+            description={isResident ? t('incidents.residentEmptyDesc') : t('incidents.emptyDesc')}
+            actionLabel={canReport ? t('incidents.emptyAction') : undefined}
             onAction={canReport ? () => setReportOpen(true) : undefined}
           />
         </Card>
@@ -134,9 +139,9 @@ export function IncidentsPage() {
                   <span className="font-mono text-xs font-bold text-ink-400">{i.code}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge tone={incidentSeverityTone(i.severity)}>{i.severity}</Badge>
+                  <Badge tone={incidentSeverityTone(i.severity)}>{t(`severity.${i.severity}`)}</Badge>
                   <Badge tone={incidentStatusTone(i.status)} dot>
-                    {i.status}
+                    {t(`status.${i.status}`)}
                   </Badge>
                 </div>
               </div>
@@ -152,7 +157,7 @@ export function IncidentsPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
                   <span className="inline-flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />
-                    {new Date(i.reportedAt).toLocaleString()}
+                    {formatDateTime(i.reportedAt, i18n.language)}
                   </span>
                   {i.barangay ? <span>· {i.barangay.name}</span> : null}
                   {i.createdBy ? <span>· {i.createdBy.fullName}</span> : null}
@@ -184,6 +189,7 @@ export function IncidentsPage() {
 }
 
 function IncidentActions({ incident, onDone }: { incident: IncidentItem; onDone: () => void }) {
+  const { t } = useTranslation();
   const [note, setNote] = useState('');
   const update = useMutation({
     mutationFn: (status: IncidentStatus) =>
@@ -199,17 +205,17 @@ function IncidentActions({ incident, onDone }: { incident: IncidentItem; onDone:
       <Input
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Resolution note (optional)"
+        placeholder={t('incidents.notePlaceholder')}
       />
       <div className="grid grid-cols-3 gap-2">
         <Button size="sm" variant="outline" onClick={() => update.mutate('VERIFIED')} disabled={update.isPending}>
-          <Check className="h-4 w-4" /> Verify
+          <Check className="h-4 w-4" /> {t('incidents.verify')}
         </Button>
         <Button size="sm" variant="secondary" onClick={() => update.mutate('RESOLVED')} disabled={update.isPending}>
-          <Check className="h-4 w-4" /> Resolve
+          <Check className="h-4 w-4" /> {t('incidents.resolve')}
         </Button>
         <Button size="sm" variant="danger" onClick={() => update.mutate('REJECTED')} disabled={update.isPending}>
-          <X className="h-4 w-4" /> Reject
+          <X className="h-4 w-4" /> {t('incidents.reject')}
         </Button>
       </div>
     </div>
@@ -227,6 +233,7 @@ function ReportSheet({
   categories: IncidentCategory[];
   onCreated: () => void;
 }) {
+  const { t } = useTranslation();
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [coords, setCoords] = useState('');
@@ -242,7 +249,7 @@ function ReportSheet({
           lat = parts[0];
           lng = parts[1];
         } else {
-          throw new Error('Coordinates must be "latitude, longitude"');
+          throw new Error(t('incidents.coordsError'));
         }
       }
       return (await api.post('/incidents', { categoryId, description, latitude: lat, longitude: lng })).data;
@@ -262,7 +269,7 @@ function ReportSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title="Report an incident"
+      title={t('incidents.sheetTitle')}
       footer={
         <Button
           fullWidth
@@ -271,14 +278,14 @@ function ReportSheet({
           onClick={() => create.mutate()}
         >
           {create.isPending ? <Spinner className="h-5 w-5" /> : <Siren className="h-5 w-5" />}
-          Submit report
+          {t('incidents.submit')}
         </Button>
       }
     >
       <div className="space-y-4">
-        <Select label="Category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <Select label={t('incidents.category')} required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           <option value="" disabled>
-            Select category
+            {t('incidents.categorySelect')}
           </option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -287,19 +294,19 @@ function ReportSheet({
           ))}
         </Select>
         <Textarea
-          label="Description"
+          label={t('incidents.description')}
           required
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe what happened…"
+          placeholder={t('incidents.descPlaceholder')}
         />
         <Input
-          label="Coordinates"
+          label={t('incidents.coords')}
           value={coords}
           onChange={(e) => setCoords(e.target.value)}
-          placeholder="latitude, longitude (optional)"
-          hint="e.g. 13.2231, 120.5932"
+          placeholder={t('incidents.coordsPlaceholder')}
+          hint={t('incidents.coordsHint')}
         />
         {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
       </div>

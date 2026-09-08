@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldHalf,
   CheckCircle2,
@@ -12,12 +13,14 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Card, Badge, Stat, CardSkeleton, Button } from '@e-tanod/ui';
+import { Card, Stat, CardSkeleton, Button } from '@e-tanod/ui';
 import { AppLogo } from '@/app/components/AppLogo';
 import type { DashboardStats } from '@e-tanod/types';
 import { isAdmin, isField, roleMeta } from '@/app/roles';
 
 export function DashboardPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const admin = isAdmin(user?.primaryRole);
   const field = isField(user?.primaryRole);
@@ -26,13 +29,13 @@ export function DashboardPage() {
 
   const quickActions = isTanod
     ? [
-        { label: 'Patrol', desc: 'Start or view patrols', icon: ShieldHalf, to: '/patrol', tint: 'bg-sky-50 text-sky-700' },
-        { label: 'Scan', desc: 'Verify checkpoints', icon: QrCode, to: '/scan', tint: 'bg-brand-50 text-brand-700' },
-        { label: 'Incidents', desc: 'Report or track', icon: Siren, to: '/incidents', tint: 'bg-rose-50 text-rose-700' },
+        { labelKey: 'dashboard.qa.patrol', icon: ShieldHalf, to: '/patrol', tint: 'bg-sky-50 text-sky-700' },
+        { labelKey: 'dashboard.qa.scan', icon: QrCode, to: '/scan', tint: 'bg-brand-50 text-brand-700' },
+        { labelKey: 'dashboard.qa.incidents', icon: Siren, to: '/incidents', tint: 'bg-rose-50 text-rose-700' },
       ]
     : [
-        { label: 'Report', desc: 'Ipaulat ang insidente', icon: Plus, to: '/incidents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
-        { label: 'Incidents', desc: 'Sundan ang mga ulat', icon: Siren, to: '/incidents', tint: 'bg-brand-50 text-brand-700' },
+        { labelKey: 'dashboard.qa.report', icon: Plus, to: '/incidents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
+        { labelKey: 'dashboard.qa.track', icon: Siren, to: '/incidents', tint: 'bg-brand-50 text-brand-700' },
       ];
 
   const { data, isLoading, error } = useQuery<DashboardStats>({
@@ -56,27 +59,27 @@ export function DashboardPage() {
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
                 <role.icon className="h-3.5 w-3.5" />
-                {role.label}
+                {t(`role.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
               </span>
               <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
-                {admin ? 'Command Center' : field ? 'Magandang araw, Tanod.' : 'Magandang araw!'},{' '}
+                {admin ? t('dashboard.heroAdmin') : isTanod ? t('dashboard.heroFieldTanod') : t('dashboard.heroField')},{' '}
                 <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
               </h1>
               <p className="mt-2 max-w-lg text-sm text-brand-100/90">
-                {admin
-                  ? 'Monitor patrols, verify incidents, and keep your barangay safe in real time.'
-                  : 'Your patrols, checkpoints, and incident reports — right at your fingertips.'}
+                {admin ? t('dashboard.heroAdminDesc') : t('dashboard.heroFieldDesc')}
               </p>
             </div>
           </div>
           {field ? (
             <div className="flex shrink-0 gap-2.5">
-              <Button variant="outline" className="border-white/25 bg-white/10 text-sand-50 hover:bg-white/20"
-                onClick={() => undefined}>
-                <QrCode className="h-4 w-4" /> Scan
-              </Button>
-              <Button className="bg-sand-50 text-brand-900 hover:bg-white" onClick={() => undefined}>
-                <Plus className="h-4 w-4" /> Report
+              {isTanod ? (
+                <Button variant="outline" className="border-white/25 bg-white/10 text-sand-50 hover:bg-white/20"
+                  onClick={() => navigate('/scan')}>
+                  <QrCode className="h-4 w-4" /> {t('dashboard.scan')}
+                </Button>
+              ) : null}
+              <Button className="bg-sand-50 text-brand-900 hover:bg-white" onClick={() => navigate('/incidents', { state: { openReport: true } })}>
+                <Plus className="h-4 w-4" /> {t('dashboard.report')}
               </Button>
             </div>
           ) : null}
@@ -97,27 +100,26 @@ export function DashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <Stat label="Active Patrols" value={data?.activePatrols ?? 0} icon={<ShieldHalf className="h-5 w-5" />} accent="sky" />
-              <Stat label="Completed Patrols" value={data?.completedPatrols ?? 0} icon={<CheckCircle2 className="h-5 w-5" />} accent="emerald" />
-              <Stat label="Today's Incidents" value={data?.todayIncidents ?? 0} icon={<Siren className="h-5 w-5" />} accent="rose" />
-              <Stat label="Open Reports" value={data?.openReports ?? 0} icon={<Inbox className="h-5 w-5" />} accent="amber" />
-              <Stat label="Missed Checkpoints" value={data?.missedCheckpoints ?? 0} icon={<AlertTriangle className="h-5 w-5" />} accent="brand" />
+              <Stat label={t('dashboard.stats.activePatrols')} value={data?.activePatrols ?? 0} icon={<ShieldHalf className="h-5 w-5" />} accent="sky" />
+              <Stat label={t('dashboard.stats.completedPatrols')} value={data?.completedPatrols ?? 0} icon={<CheckCircle2 className="h-5 w-5" />} accent="emerald" />
+              <Stat label={t('dashboard.stats.todayIncidents')} value={data?.todayIncidents ?? 0} icon={<Siren className="h-5 w-5" />} accent="rose" />
+              <Stat label={t('dashboard.stats.openReports')} value={data?.openReports ?? 0} icon={<Inbox className="h-5 w-5" />} accent="amber" />
+              <Stat label={t('dashboard.stats.missedCheckpoints')} value={data?.missedCheckpoints ?? 0} icon={<AlertTriangle className="h-5 w-5" />} accent="brand" />
             </div>
           )}
         </>
       ) : field ? (
-        <Card title="Quick actions" icon={<Layers className="h-4 w-4" />}>
+        <Card title={t('dashboard.qaTitle')} icon={<Layers className="h-4 w-4" />}>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((q) => (
-              <QuickAction key={q.label} {...q} />
+              <QuickAction key={q.labelKey} {...q} />
             ))}
           </div>
         </Card>
       ) : (
-        <Card title="Your home">
+        <Card title={t('dashboard.homeTitle')}>
           <p className="text-sm text-ink-600">
-            You are logged in as <Badge tone={role.tone}>{role.label}</Badge>. Explore your dashboard to
-            manage patrols, checkpoints, incidents, and community reports.
+            {t('dashboard.homeDesc', { role: t(`role.${user?.primaryRole ?? 'SUPER_ADMIN'}`) })}
           </p>
         </Card>
       )}
@@ -126,20 +128,19 @@ export function DashboardPage() {
 }
 
 function QuickAction({
-  label,
-  desc,
+  labelKey,
   icon: Icon,
   to,
   tint,
   state,
 }: {
-  label: string;
-  desc: string;
+  labelKey: string;
   icon: typeof ShieldHalf;
   to: string;
   tint: string;
   state?: Record<string, unknown>;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <button
@@ -150,8 +151,8 @@ function QuickAction({
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-bold text-ink-900">{label}</span>
-        <span className="block text-xs text-ink-500">{desc}</span>
+        <span className="block text-sm font-bold text-ink-900">{t(`${labelKey}.label`)}</span>
+        <span className="block text-xs text-ink-500">{t(`${labelKey}.desc`)}</span>
       </span>
     </button>
   );

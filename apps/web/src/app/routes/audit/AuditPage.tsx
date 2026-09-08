@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ScrollText, Fingerprint, Globe } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
 import { Badge, Spinner, EmptyState } from '@e-tanod/ui';
 import { PageHeader } from '@/app/components/PageHeader';
+import { formatDateTime } from '@/app/lib/format';
 
 interface AuditEntry {
   id: string;
@@ -27,6 +29,7 @@ const actionTone = (action: string) =>
     : 'default';
 
 export function AuditPage() {
+  const { t, i18n } = useTranslation();
   const { data, isLoading, error } = useQuery<{ data: AuditEntry[]; total: number }>({
     queryKey: ['audit'],
     queryFn: async () => (await api.get<{ data: AuditEntry[]; total: number }>('/audit')).data,
@@ -35,8 +38,8 @@ export function AuditPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Audit Logs"
-        description="Append-only log of security-sensitive actions"
+        title={t('audit.title')}
+        description={t('audit.desc')}
         icon={<ScrollText className="h-5 w-5" />}
       />
 
@@ -51,8 +54,8 @@ export function AuditPage() {
       ) : (data?.data ?? []).length === 0 ? (
         <EmptyState
           icon={<Fingerprint className="h-8 w-8" />}
-          title="No audit entries"
-          description="Security-sensitive actions will be logged here."
+          title={t('audit.emptyTitle')}
+          description={t('audit.emptyDesc')}
         />
       ) : (
         <div className="surface p-5">
@@ -68,7 +71,7 @@ export function AuditPage() {
                           {entry.actor.fullName || entry.actor.username}
                         </span>
                       ) : (
-                        <span className="text-sm font-medium text-ink-400">system</span>
+                        <span className="text-sm font-medium text-ink-400">{t('audit.system')}</span>
                       )}
                     </div>
                     <span className="flex items-center gap-1.5 text-xs text-ink-400">
@@ -78,7 +81,7 @@ export function AuditPage() {
                         </span>
                       ) : null}
                       <span className="hidden sm:inline">·</span>
-                      {new Date(entry.createdAt).toLocaleString()}
+                      {formatDateTime(entry.createdAt, i18n.language)}
                     </span>
                   </div>
                   {entry.resourceType ? (

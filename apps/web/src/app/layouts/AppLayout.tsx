@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShieldHalf,
@@ -12,29 +12,32 @@ import {
   LogOut,
   type LucideIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
 import { Badge, Button } from '@e-tanod/ui';
 import type { RoleName } from '@e-tanod/types';
 import { isAdmin, roleMeta } from '@/app/roles';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { useIsMobile } from '@/app/lib/useIsMobile';
+import { LanguageToggle } from '@/i18n/LanguageToggle';
+import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
   roles: RoleName[] | 'all';
   end?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: 'all', end: true },
-  { to: '/patrol', label: 'Patrol', icon: ShieldHalf, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
-  { to: '/scan', label: 'Scan', icon: QrCode, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
-  { to: '/incidents', label: 'Incidents', icon: Siren, roles: 'all' },
-  { to: '/users', label: 'Users', icon: Users, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
-  { to: '/barangays', label: 'Barangays', icon: Building2, roles: ['SUPER_ADMIN'] },
-  { to: '/audit', label: 'Audit Logs', icon: ScrollText, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
+  { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard, roles: 'all', end: true },
+  { to: '/patrol', labelKey: 'nav.patrol', icon: ShieldHalf, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/scan', labelKey: 'nav.scan', icon: QrCode, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/incidents', labelKey: 'nav.incidents', icon: Siren, roles: 'all' },
+  { to: '/users', labelKey: 'nav.users', icon: Users, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
+  { to: '/barangays', labelKey: 'nav.barangays', icon: Building2, roles: ['SUPER_ADMIN'] },
+  { to: '/audit', labelKey: 'nav.audit', icon: ScrollText, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
 ];
 
 // Which items appear in the mobile bottom tab bar (field users)
@@ -45,6 +48,7 @@ function visibleFor(user: RoleName | undefined, item: NavItem) {
 }
 
 function SidebarContent({ user, onNavigate }: { user?: RoleName; onNavigate?: () => void }) {
+  const { t } = useTranslation();
   const items = NAV_ITEMS.filter((i) => visibleFor(user, i));
   return (
     <div className="flex h-full flex-col">
@@ -69,7 +73,7 @@ function SidebarContent({ user, onNavigate }: { user?: RoleName; onNavigate?: ()
             {({ isActive }) => (
               <>
                 <item.icon className={`h-[18px] w-[18px] ${isActive ? 'text-brand-600' : 'text-ink-400 group-hover:text-ink-600'}`} />
-                {item.label}
+                {t(item.labelKey)}
               </>
             )}
           </NavLink>
@@ -83,6 +87,8 @@ export function AppLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -139,7 +145,7 @@ export function AppLayout() {
               <button
                 onClick={() => setDrawerOpen(true)}
                 className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-600 transition-colors hover:bg-ink-100"
-                aria-label="Open menu"
+                aria-label={t('layout.openMenu')}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -150,7 +156,7 @@ export function AppLayout() {
               </span>
             ) : (
               <span className="hidden text-sm font-medium text-ink-400 md:block">
-                Barangay Security Management
+                {t('layout.barangaySecurity')}
               </span>
             )}
           </div>
@@ -163,12 +169,13 @@ export function AppLayout() {
               <div className="text-xs text-ink-400">@{user?.username}</div>
             </div>
             <Badge tone={meta.tone} dot dotClass={undefined}>
-              {meta.shortLabel}
+              {t(`roleShort.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
             </Badge>
+            <LanguageToggle />
             <button
               onClick={handleLogout}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800"
-              aria-label="Log out"
+              aria-label={t('layout.logout')}
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -179,7 +186,9 @@ export function AppLayout() {
         <main
           className={`flex-1 ${useBottomTabs ? 'pb-28' : 'pb-10'} mx-auto w-full max-w-7xl px-4 pt-6 md:px-6 md:pt-8`}
         >
-          <Outlet />
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
 
         {/* Mobile bottom tab bar for field users */}
@@ -211,7 +220,7 @@ export function AppLayout() {
                       >
                         <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} />
                       </span>
-                      {item.label}
+                      {t(item.labelKey)}
                     </>
                   )}
                 </NavLink>
@@ -228,6 +237,7 @@ function UserCard() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const meta = roleMeta(user?.primaryRole);
 
   const handleLogout = async () => {
@@ -246,7 +256,7 @@ function UserCard() {
         </div>
         <div className="truncate text-xs text-ink-400">@{user?.username}</div>
       </div>
-      <Button variant="ghost" size="sm" className="h-9 px-2" onClick={handleLogout} aria-label="Log out">
+      <Button variant="ghost" size="sm" className="h-9 px-2" onClick={handleLogout} aria-label={t('layout.logout')}>
         <LogOut className="h-4 w-4" />
       </Button>
     </div>

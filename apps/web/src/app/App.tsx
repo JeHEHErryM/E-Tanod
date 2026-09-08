@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import type { RoleName } from '@e-tanod/types';
 import { AppLayout } from '@/app/layouts/AppLayout';
 import { LoginPage } from '@/app/routes/auth/LoginPage';
+import { LandingPage } from '@/app/routes/landing/LandingPage';
 import { DashboardPage } from '@/app/routes/dashboard/DashboardPage';
 import { UsersPage } from '@/app/routes/users/UsersPage';
 import { BarangaysPage } from '@/app/routes/barangays/BarangaysPage';
@@ -11,12 +12,14 @@ import { AuditPage } from '@/app/routes/audit/AuditPage';
 import { PatrolPage } from '@/app/routes/patrol/PatrolPage';
 import { ScanPage } from '@/app/routes/scan/ScanPage';
 import { IncidentsPage } from '@/app/routes/incidents/IncidentsPage';
+import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const location = useLocation();
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const to = location.pathname === '/' ? '/landing' : '/login';
+    return <Navigate to={to} state={{ from: location }} replace />;
   }
   return <>{children}</>;
 }
@@ -28,8 +31,20 @@ function RequireRole({ roles, children }: { roles: RoleName[]; children: React.R
   return <>{children}</>;
 }
 
+function LandingRoute() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return <LandingPage />;
+}
+
+function HomeRedirect() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return <Navigate to={isAuthenticated ? '/' : '/landing'} replace />;
+}
+
 export default function App() {
-  const { isAuthenticated, fetchMe } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const fetchMe = useAuthStore((s) => s.fetchMe);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -38,70 +53,73 @@ export default function App() {
   }, [isAuthenticated, fetchMe]);
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-
-      <Route
-        element={
-          <RequireAuth>
-            <AppLayout />
-          </RequireAuth>
-        }
-      >
-        <Route path="/" element={<DashboardPage />} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/landing" element={<LandingRoute />} />
+        <Route path="/login" element={<LoginPage />} />
 
         <Route
-          path="/patrol"
           element={
-            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
-              <PatrolPage />
-            </RequireRole>
+            <RequireAuth>
+              <AppLayout />
+            </RequireAuth>
           }
-        />
-        <Route
-          path="/scan"
-          element={
-            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
-              <ScanPage />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/incidents"
-          element={
-            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD', 'RESIDENT']}>
-              <IncidentsPage />
-            </RequireRole>
-          }
-        />
+        >
+          <Route path="/" element={<DashboardPage />} />
 
-        <Route
-          path="/users"
-          element={
-            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
-              <UsersPage />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/barangays"
-          element={
-            <RequireRole roles={['SUPER_ADMIN']}>
-              <BarangaysPage />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/audit"
-          element={
-            <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
-              <AuditPage />
-            </RequireRole>
-          }
-        />
-      </Route>
+          <Route
+            path="/patrol"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
+                <PatrolPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/scan"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
+                <ScanPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/incidents"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD', 'RESIDENT']}>
+                <IncidentsPage />
+              </RequireRole>
+            }
+          />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          <Route
+            path="/users"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <UsersPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/barangays"
+            element={
+              <RequireRole roles={['SUPER_ADMIN']}>
+                <BarangaysPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/audit"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <AuditPage />
+              </RequireRole>
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<HomeRedirect />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }

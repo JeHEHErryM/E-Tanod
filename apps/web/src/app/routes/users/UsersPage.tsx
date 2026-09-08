@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, Search, UserPlus, User } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
 import { Card, Badge, Button, Spinner, EmptyState, Sheet, Input, Select } from '@e-tanod/ui';
@@ -9,6 +10,7 @@ import { roleMeta } from '@/app/roles';
 import { PageHeader } from '@/app/components/PageHeader';
 
 export function UsersPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -40,12 +42,12 @@ export function UsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Users"
-        description="Manage system users and roles"
+        title={t('users.title')}
+        description={t('users.desc')}
         icon={<Users className="h-5 w-5" />}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <UserPlus className="h-4 w-4" /> Add User
+            <UserPlus className="h-4 w-4" /> {t('users.add')}
           </Button>
         }
       />
@@ -57,7 +59,7 @@ export function UsersPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or username…"
+          placeholder={t('users.searchPlaceholder')}
           className="h-11 w-full rounded-xl border border-ink-200 bg-white pl-10 pr-4 text-sm text-ink-900 placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-brand-100"
         />
       </div>
@@ -74,8 +76,8 @@ export function UsersPage() {
         <Card>
           <EmptyState
             icon={<Users className="h-8 w-8" />}
-            title="No users found"
-            description={search ? `No users match "${search}".` : 'No users yet.'}
+            title={t('users.emptyTitle')}
+            description={search ? t('users.emptySearch', { search }) : t('users.emptyAll')}
           />
         </Card>
       ) : (
@@ -95,9 +97,9 @@ export function UsersPage() {
                   <div className="truncate text-xs text-ink-400">@{u.username}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
-                  <Badge tone={meta.tone}>{meta.label}</Badge>
+                  <Badge tone={meta.tone}>{t(`role.${u.primaryRole}`)}</Badge>
                   <Badge tone={u.isActive ? 'success' : 'danger'} dot>
-                    {u.isActive ? 'Active' : 'Inactive'}
+                    {u.isActive ? t('users.active') : t('users.inactive')}
                   </Badge>
                 </div>
               </div>
@@ -127,6 +129,7 @@ function CreateUserSheet({
   onClose: () => void;
   onCreate: (input: { username: string; password: string; fullName: string; primaryRole: RoleName; roles: RoleName[] }) => void;
 }) {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
@@ -136,7 +139,7 @@ function CreateUserSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title="Add new user"
+      title={t('users.createTitle')}
       footer={
         <Button
           fullWidth
@@ -145,7 +148,7 @@ function CreateUserSheet({
           form="create-user"
           disabled={!username || !fullName || password.length < 8}
         >
-          <UserPlus className="h-5 w-5" /> Create user
+          <UserPlus className="h-5 w-5" /> {t('users.create')}
         </Button>
       }
     >
@@ -160,14 +163,14 @@ function CreateUserSheet({
         }}
         className="space-y-4"
       >
-        <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Juan Dela Cruz" leading={<User className="h-5 w-5" />} />
-        <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="juan.tanod" leading={<Users className="h-5 w-5" />} />
-        <Input label="Temporary password" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Min. 8 characters" />
-        <Select label="Primary role" value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
-          <option value="TANOD">Tanod</option>
-          <option value="BARANGAY_ADMIN">Barangay Admin</option>
-          <option value="RESIDENT">Resident</option>
-          <option value="SUPER_ADMIN">Super Admin</option>
+        <Input label={t('users.fullName')} value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder={t('users.fullNamePlaceholder')} leading={<User className="h-5 w-5" />} />
+        <Input label={t('users.username')} value={username} onChange={(e) => setUsername(e.target.value)} required placeholder={t('users.usernamePlaceholder')} leading={<Users className="h-5 w-5" />} />
+        <Input label={t('users.tempPassword')} type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder={t('users.passwordHint')} />
+        <Select label={t('users.primaryRole')} value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
+          <option value="TANOD">{t('role.TANOD')}</option>
+          <option value="BARANGAY_ADMIN">{t('role.BARANGAY_ADMIN')}</option>
+          <option value="RESIDENT">{t('role.RESIDENT')}</option>
+          <option value="SUPER_ADMIN">{t('role.SUPER_ADMIN')}</option>
         </Select>
       </form>
     </Sheet>

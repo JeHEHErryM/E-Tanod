@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Building2, MapPin } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
 import { Badge, Spinner, EmptyState } from '@e-tanod/ui';
@@ -6,6 +7,7 @@ import type { Barangay } from '@e-tanod/types';
 import { PageHeader } from '@/app/components/PageHeader';
 
 export function BarangaysPage() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery<Barangay[]>({
     queryKey: ['barangays'],
     queryFn: async () => (await api.get<Barangay[]>('/barangays')).data,
@@ -14,8 +16,8 @@ export function BarangaysPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Barangays"
-        description="Manage barangay records"
+        title={t('barangays.title')}
+        description={t('barangays.desc')}
         icon={<Building2 className="h-5 w-5" />}
       />
 
@@ -30,8 +32,8 @@ export function BarangaysPage() {
       ) : (data ?? []).length === 0 ? (
         <EmptyState
           icon={<Building2 className="h-8 w-8" />}
-          title="No barangays"
-          description="No barangay records exist yet."
+          title={t('barangays.emptyTitle')}
+          description={t('barangays.emptyDesc')}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -45,7 +47,7 @@ export function BarangaysPage() {
                   <Building2 className="h-6 w-6" />
                 </span>
                 <Badge tone={b.isActive ? 'success' : 'danger'} dot>
-                  {b.isActive ? 'Active' : 'Inactive'}
+                  {b.isActive ? t('users.active') : t('users.inactive')}
                 </Badge>
               </div>
               <h3 className="mt-4 font-display text-lg font-black text-ink-900">{b.name}</h3>

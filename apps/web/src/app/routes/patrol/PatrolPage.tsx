@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldHalf,
   MapPin,
@@ -15,6 +16,7 @@ import type { PatrolStatus } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
 import { patrolStatusTone } from '@/app/badges';
 import { PageHeader } from '@/app/components/PageHeader';
+import { formatDate } from '@/app/lib/format';
 
 interface Assignment {
   id: string;
@@ -40,12 +42,8 @@ interface ActiveSession {
   checkpointScans: { checkpoint: { name: string }; result: string; scannedAt: string }[];
 }
 
-function formatDate(d: string) {
-  const date = new Date(d + (d.length === 10 ? 'T00:00:00' : ''));
-  return new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
-}
-
 export function PatrolPage() {
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const admin = isAdmin(user?.primaryRole);
   const qc = useQueryClient();
@@ -87,8 +85,8 @@ export function PatrolPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Patrol"
-        description={admin ? 'Monitor schedules and assignments' : 'Your patrol assignments'}
+        title={t('patrol.title')}
+        description={admin ? t('patrol.adminDesc') : t('patrol.fieldDesc')}
         icon={<ShieldHalf className="h-5 w-5" />}
       />
 
@@ -97,9 +95,9 @@ export function PatrolPage() {
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-              ACTIVE PATROL
+              {t('patrol.activeBanner')}
             </span>
-            <Badge tone="success">Live</Badge>
+            <Badge tone="success">{t('patrol.live')}</Badge>
           </div>
           <div className="mt-4">
             <h3 className="font-display text-xl font-black">
@@ -114,10 +112,10 @@ export function PatrolPage() {
           <div className="mt-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <CheckCircle2 className="h-4 w-4 text-emerald-200" />
-              {verified} verified
+              {t('patrol.verified', { count: verified })}
             </div>
             <Button variant="danger" onClick={() => setEndSheetOpen(true)}>
-              <Square className="h-4 w-4" /> End Patrol
+              <Square className="h-4 w-4" /> {t('patrol.end')}
             </Button>
           </div>
         </div>
@@ -127,24 +125,24 @@ export function PatrolPage() {
 
       {admin && active.data ? (
         <Card
-          title="Active Session"
+          title={t('patrol.adminActiveTitle')}
           icon={<MapPin className="h-4 w-4" />}
-          actions={<Badge tone="success">ACTIVE</Badge>}
+          actions={<Badge tone="success">{t('patrol.active')}</Badge>}
         >
           <p className="text-sm text-ink-600">
             <span className="font-semibold text-ink-900">
               {active.data.patrolAssignment.patrolSchedule.title}
             </span>{' '}
-            · verified {verified} checkpoint(s)
+            {t('patrol.verifiedCheckpoints', { count: verified })}
           </p>
           <Button variant="danger" size="sm" className="mt-3" onClick={() => setEndSheetOpen(true)}>
-            <Square className="h-4 w-4" /> End
+            <Square className="h-4 w-4" /> {t('patrol.endShort')}
           </Button>
         </Card>
       ) : null}
 
       <Card
-        title={admin ? 'All Assignments' : 'My Assignments'}
+        title={admin ? t('patrol.allAssignments') : t('patrol.myAssignments')}
         icon={<ShieldHalf className="h-4 w-4" />}
       >
         {assignments.isLoading ? (
@@ -158,8 +156,8 @@ export function PatrolPage() {
         ) : (assignments.data ?? []).length === 0 ? (
           <EmptyState
             icon={<ShieldHalf className="h-8 w-8" />}
-            title="No assignments yet"
-            description="You don't have any assigned patrols at the moment."
+            title={t('patrol.emptyTitle')}
+            description={t('patrol.emptyDesc')}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -177,11 +175,11 @@ export function PatrolPage() {
                       </span>
                       <div>
                         <div className="font-bold text-ink-900">{a.patrolSchedule.title}</div>
-                        <div className="text-xs text-ink-400">{formatDate(a.patrolSchedule.scheduledDate)}</div>
+                        <div className="text-xs text-ink-400">{formatDate(a.patrolSchedule.scheduledDate, i18n.language)}</div>
                       </div>
                     </div>
                     <Badge tone={patrolStatusTone(a.status)} dot>
-                      {a.status}
+                      {t(`patrolStatus.${a.status}`)}
                     </Badge>
                   </div>
 
@@ -191,7 +189,8 @@ export function PatrolPage() {
                   </div>
 
                   <div className="mt-2 text-xs text-ink-400">
-                    {a.patrolSchedule.requiredCheckpoints.length} checkpoints ·{' '}
+                    {t('patrol.checkpoints', { count: a.patrolSchedule.requiredCheckpoints.length })}
+                    <span> · </span>
                     {a.patrolSchedule.requiredCheckpoints.map((c) => c.checkpoint.name).join(', ')}
                   </div>
 
@@ -204,7 +203,7 @@ export function PatrolPage() {
                         disabled={startPatrol.isPending}
                       >
                         {startPatrol.isPending ? <Spinner className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        Start Patrol
+                        {t('patrol.start')}
                       </Button>
                     </div>
                   ) : null}
@@ -218,7 +217,7 @@ export function PatrolPage() {
       <Sheet
         open={endSheetOpen}
         onClose={() => setEndSheetOpen(false)}
-        title="End patrol"
+        title={t('patrol.endSheetTitle')}
         footer={
           <Button
             variant="danger"
@@ -228,18 +227,18 @@ export function PatrolPage() {
             onClick={() => active.data && endPatrol.mutate(active.data.id)}
           >
             {endPatrol.isPending ? <Spinner className="h-5 w-5" /> : <Square className="h-5 w-5" />}
-            Confirm End
+            {t('patrol.confirmEnd')}
           </Button>
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-ink-500">Add a summary of this patrol (optional).</p>
+          <p className="text-sm text-ink-500">{t('patrol.endHint')}</p>
           <Textarea
-            label="End notes"
+            label={t('patrol.endNotes')}
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. Completed all checkpoints, no incidents encountered."
+            placeholder={t('patrol.endPlaceholder')}
           />
         </div>
       </Sheet>
