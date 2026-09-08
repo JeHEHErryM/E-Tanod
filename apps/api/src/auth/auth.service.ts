@@ -1,11 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from './auth-user.interface';
+import { RegisterDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -127,5 +129,65 @@ export class AuthService {
       });
     }
     await this.audit.log(userId, 'LOGOUT', 'session', null, null);
+  }
+
+  /**
+   * Public account request flow. New accounts are created INACTIVE so an
+   * admin can review and approve them (see UsersModule approvals).
+   */
+  async register(dto: RegisterDto, ip?: string, userAgent?: string) {
+    const username = dto.username.trim();
+    const fullName = dto.fullName.trim();
+    const email = dto.email.trim().toLowerCase();
+    const requestedRole = dto.role ?? Role.RESIDENT;
+
+    if (requestedRole !== Role.RESIDENT && requestedRole !== Role.TANOD) {
+      throw new BadRequestException('Role not allowed for self-registration');
+    }
+
+    const existing = await this.prisma.user.findFirst({
+      where: { OR: [{ username }, { email }] },
+    });
+    if (existing) throw new BadRequestException('Username or email is already registered');
+
+    let barangayId: string | null = null;
+    if (dto.barangayId) {
+      const barangay = await this.prisma.barangay.findUnique({ where: { id: dto.barangayId } });
+      if (!barangay) throw new BadRequestException('Barangay not found');
+      barangayId = barangay.id;
+    }
+
+    const roleRecord = await this.prisma.roleRecord.findUnique({ where: { name: requestedRole } });
+    if (!roleRecord) throw new BadRequestException('Role not found');
+
+    const passwordHash = await argon2.hash(dto.password);
+
+    const user = await this.prisma.user.create({
+      data: {
+        username,
+        passwordHash,
+        fullName,
+        email,
+        phone: dto.phone,
+        barangayId,
+        isActive: false,
+        isVerified: false,
+        primaryRoleId: roleRecord.id,
+        roles: { create: { roleId: roleRecord.id } },
+        profile: { create: { contactNumber: dto.phone, escooter: false, barangayId } },
+      },
+    });
+
+    await this.audit.log(
+      user.id,
+      'ACCOUNT_REGISTERED',
+      'user',
+      user.id,
+      { username, fullName, role: requestedRole, barangayId },
+      ip,
+      userAgent,
+    );
+
+    return { success: true };
   }
 }

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import type { RoleName } from '@e-tanod/types';
 import { AppLayout } from '@/app/layouts/AppLayout';
 import { LoginPage } from '@/app/routes/auth/LoginPage';
+import { SignupPage } from '@/app/routes/auth/SignupPage';
 import { LandingPage } from '@/app/routes/landing/LandingPage';
 import { DashboardPage } from '@/app/routes/dashboard/DashboardPage';
 import { UsersPage } from '@/app/routes/users/UsersPage';
@@ -42,6 +43,12 @@ function HomeRedirect() {
   return <Navigate to={isAuthenticated ? '/' : '/landing'} replace />;
 }
 
+function SignupRoute() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return <SignupPage />;
+}
+
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const fetchMe = useAuthStore((s) => s.fetchMe);
@@ -57,6 +64,7 @@ export default function App() {
       <Routes>
         <Route path="/landing" element={<LandingRoute />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupRoute />} />
 
         <Route
           element={

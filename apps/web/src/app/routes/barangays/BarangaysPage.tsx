@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Building2, MapPin } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
-import { Badge, Spinner, EmptyState } from '@e-tanod/ui';
+import { Spinner, EmptyState } from '@e-tanod/ui';
 import type { Barangay } from '@e-tanod/types';
+import { StatusLabel } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 
 export function BarangaysPage() {
@@ -46,9 +47,7 @@ export function BarangaysPage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
                   <Building2 className="h-6 w-6" />
                 </span>
-                <Badge tone={b.isActive ? 'success' : 'danger'} dot>
-                  {b.isActive ? t('users.active') : t('users.inactive')}
-                </Badge>
+                <StatusLabel tone={b.isActive ? 'success' : 'danger'} label={b.isActive ? t('users.active') : t('users.inactive')} />
               </div>
               <h3 className="mt-4 font-display text-lg font-black text-ink-900">{b.name}</h3>
               <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-ink-400">

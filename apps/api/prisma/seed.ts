@@ -40,9 +40,12 @@ async function main() {
   });
 
   // --- Users (demo) ---
-  const passwordHash = await argon2.hash('DemoPass123!');
+  // Super admin credentials are NOT printed and can be set via the
+  // SUPERADMIN_PASSWORD env var. All demo accounts share DemoPass123! in dev.
+  const demoHash = await argon2.hash('DemoPass123!');
+  const superadminHash = await argon2.hash(process.env.SUPERADMIN_PASSWORD ?? 'DemoPass123!');
   const demoUsers = [
-    { username: 'superadmin', fullName: 'Demo Super Admin', role: Role.SUPER_ADMIN },
+    { username: 'superadmin', fullName: 'E-Tanod Administrator', role: Role.SUPER_ADMIN },
     { username: 'barangayadmin', fullName: 'Demo Barangay Admin', role: Role.BARANGAY_ADMIN },
     { username: 'tanod1', fullName: 'Demo Tanod One', role: Role.TANOD },
     { username: 'tanod2', fullName: 'Demo Tanod Two', role: Role.TANOD },
@@ -56,7 +59,7 @@ async function main() {
       update: {},
       create: {
         username: u.username,
-        passwordHash,
+        passwordHash: u.role === Role.SUPER_ADMIN ? superadminHash : demoHash,
         fullName: u.fullName,
         barangayId: u.role === Role.SUPER_ADMIN ? null : barangay.id,
         primaryRoleId: roleMap[u.role],
@@ -160,7 +163,12 @@ async function main() {
   });
 
   console.log('Seeding complete.');
-  console.log('DEMO accounts (password: DemoPass123!): superadmin, barangayadmin, tanod1, tanod2, resident1');
+  console.log('DEMO accounts (password: DemoPass123!): barangayadmin, tanod1, tanod2, resident1');
+  if (process.env.SUPERADMIN_PASSWORD) {
+    console.log('Super admin: configured via SUPERADMIN_PASSWORD (kept secret, not shown).');
+  } else {
+    console.log('Super admin: using the default dev password (set SUPERADMIN_PASSWORD in production).');
+  }
   console.log(`DEMO patrol schedule: ${schedule.id}`);
 }
 

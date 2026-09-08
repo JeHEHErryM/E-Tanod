@@ -10,7 +10,6 @@ import type { RoleName } from '@e-tanod/types';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
 
 const demoHints: { roleKey: RoleName; user: string; tint: string }[] = [
-  { roleKey: 'SUPER_ADMIN', user: 'superadmin', tint: 'bg-rose-500' },
   { roleKey: 'BARANGAY_ADMIN', user: 'barangayadmin', tint: 'bg-amber-500' },
   { roleKey: 'TANOD', user: 'tanod1', tint: 'bg-sky-500' },
   { roleKey: 'RESIDENT', user: 'resident1', tint: 'bg-emerald-500' },
@@ -143,6 +142,13 @@ export function LoginPage() {
               )}
             </Button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-ink-500">
+            {t('login.noAccount')}{' '}
+            <Link to="/signup" className="font-bold text-brand-700 underline-offset-4 transition-colors hover:text-brand-800 hover:underline">
+              {t('login.signupCta')}
+            </Link>
+          </p>
 
           <div className="mt-8 rounded-2xl border border-ink-100 bg-white p-4 shadow-soft">
             <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink-400">

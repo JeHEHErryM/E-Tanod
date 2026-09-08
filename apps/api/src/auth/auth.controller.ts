@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/roles.decorator';
 import { AuthUser } from './auth-user.interface';
-import { LoginDto, RefreshDto } from './dto/login.dto';
+import { LoginDto, RefreshDto, RegisterDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,6 +20,18 @@ export class AuthController {
     const user = await this.auth.validateUser(dto.username, dto.password);
     const ip = (req as unknown as { ip?: string }).ip;
     return this.auth.login(user, ip, userAgent);
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    const ip = (req as unknown as { ip?: string }).ip;
+    return this.auth.register(dto, ip, userAgent);
   }
 
   @Public()

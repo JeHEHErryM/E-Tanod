@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
-import { Badge, Button } from '@e-tanod/ui';
+import { Button } from '@e-tanod/ui';
 import type { RoleName } from '@e-tanod/types';
 import { isAdmin, roleMeta } from '@/app/roles';
 import { BrandWordmark } from '@/app/components/AppLogo';
@@ -161,16 +161,19 @@ export function AppLayout() {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden text-right sm:block">
               <div className="text-sm font-bold leading-tight text-ink-900">
                 {user?.fullName || user?.username}
               </div>
               <div className="text-xs text-ink-400">@{user?.username}</div>
             </div>
-            <Badge tone={meta.tone} dot dotClass={undefined}>
+            <span className="hidden items-center gap-1.5 rounded-lg bg-white/70 px-2 py-1 text-xs font-bold text-ink-600 ring-1 ring-ink-100 sm:inline-flex">
+              <span className={`flex h-5 w-5 items-center justify-center rounded-md ${meta.tint}`}>
+                <meta.icon className="h-3 w-3" />
+              </span>
               {t(`roleShort.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
-            </Badge>
+            </span>
             <LanguageToggle />
             <button
               onClick={handleLogout}
@@ -197,14 +200,14 @@ export function AppLayout() {
             className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-100 bg-white/95 pb-safe backdrop-blur-md md:hidden"
             aria-label="Primary"
           >
-            <div className="mx-auto flex h-[4.25rem] max-w-md items-stretch px-2">
+            <div className="mx-auto flex h-[3.5rem] max-w-md items-stretch px-1.5 pb-safe">
               {NAV_ITEMS.filter((i) => visibleFor(user?.primaryRole, i) && BOTTOM_TABS.includes(i.to)).map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `group relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors ${
+                    `group relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${
                       isActive ? 'text-brand-700' : 'text-ink-400'
                     }`
                   }
@@ -212,7 +215,7 @@ export function AppLayout() {
                   {({ isActive }) => (
                     <>
                       <span
-                        className={`flex h-8 w-14 items-center justify-center rounded-full transition-all duration-200 ${
+                        className={`flex h-8 w-12 items-center justify-center rounded-full transition-all duration-200 ${
                           isActive
                             ? 'bg-brand-600 text-white shadow-soft shadow-brand-900/25'
                             : 'bg-transparent text-ink-400 group-hover:text-ink-600'
@@ -220,7 +223,7 @@ export function AppLayout() {
                       >
                         <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} />
                       </span>
-                      {t(item.labelKey)}
+                      <span className="px-1 text-center">{t(item.labelKey)}</span>
                     </>
                   )}
                 </NavLink>

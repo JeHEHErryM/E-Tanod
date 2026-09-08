@@ -51,34 +51,33 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-6 text-sand-50 shadow-panel sm:p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-5 text-sand-50 shadow-panel sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-            <AppLogo size={64} light />
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <AppLogo size={56} light />
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
                 <role.icon className="h-3.5 w-3.5" />
                 {t(`role.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
               </span>
-              <h1 className="mt-3 font-display text-2xl font-black tracking-tight text-balance sm:text-3xl">
+              <h1 className="mt-2.5 font-display text-xl font-black tracking-tight text-balance sm:mt-3 sm:text-3xl">
                 {admin ? t('dashboard.heroAdmin') : isTanod ? t('dashboard.heroFieldTanod') : t('dashboard.heroField')},{' '}
                 <span className="text-brand-200">{user?.fullName?.split(' ')[0] || user?.username}</span>
               </h1>
-              <p className="mt-2 max-w-lg text-sm text-brand-100/90">
+              <p className="mt-1.5 max-w-lg text-sm text-brand-100/90">
                 {admin ? t('dashboard.heroAdminDesc') : t('dashboard.heroFieldDesc')}
               </p>
             </div>
           </div>
           {field ? (
-            <div className="flex shrink-0 gap-2.5">
+            <div className="flex shrink-0 flex-wrap gap-2.5">
               {isTanod ? (
-                <Button variant="outline" className="border-white/25 bg-white/10 text-sand-50 hover:bg-white/20"
-                  onClick={() => navigate('/scan')}>
+                <Button variant="onDark" onClick={() => navigate('/scan')}>
                   <QrCode className="h-4 w-4" /> {t('dashboard.scan')}
                 </Button>
               ) : null}
-              <Button className="bg-sand-50 text-brand-900 hover:bg-white" onClick={() => navigate('/incidents', { state: { openReport: true } })}>
+              <Button variant="light" onClick={() => navigate('/incidents', { state: { openReport: true } })}>
                 <Plus className="h-4 w-4" /> {t('dashboard.report')}
               </Button>
             </div>
@@ -110,7 +109,7 @@ export function DashboardPage() {
         </>
       ) : field ? (
         <Card title={t('dashboard.qaTitle')} icon={<Layers className="h-4 w-4" />}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {quickActions.map((q) => (
               <QuickAction key={q.labelKey} {...q} />
             ))}

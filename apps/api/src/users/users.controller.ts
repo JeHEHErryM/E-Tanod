@@ -18,6 +18,7 @@ export class UsersController {
     @Query('role') role?: Role,
     @Query('search') search?: string,
     @Query('barangayId') barangayId?: string,
+    @Query('isActive') isActive?: string,
   ) {
     return this.users.findAll({
       page: parseInt(page, 10) || 1,
@@ -25,6 +26,7 @@ export class UsersController {
       role,
       search,
       barangayId,
+      isActive: isActive === undefined ? undefined : isActive === 'true',
     });
   }
 

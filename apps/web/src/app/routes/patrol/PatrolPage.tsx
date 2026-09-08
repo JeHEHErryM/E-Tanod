@@ -11,10 +11,10 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Badge, Card, Spinner, EmptyState, Sheet, Textarea } from '@e-tanod/ui';
+import { Button, Card, Spinner, EmptyState, Sheet, Textarea } from '@e-tanod/ui';
 import type { PatrolStatus } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
-import { patrolStatusTone } from '@/app/badges';
+import { StatusLabel, patrolStatusTone } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDate } from '@/app/lib/format';
 
@@ -97,7 +97,6 @@ export function PatrolPage() {
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
               {t('patrol.activeBanner')}
             </span>
-            <Badge tone="success">{t('patrol.live')}</Badge>
           </div>
           <div className="mt-4">
             <h3 className="font-display text-xl font-black">
@@ -127,7 +126,7 @@ export function PatrolPage() {
         <Card
           title={t('patrol.adminActiveTitle')}
           icon={<MapPin className="h-4 w-4" />}
-          actions={<Badge tone="success">{t('patrol.active')}</Badge>}
+          actions={<StatusLabel tone="success" label={t('patrol.active')} />}
         >
           <p className="text-sm text-ink-600">
             <span className="font-semibold text-ink-900">
@@ -178,9 +177,7 @@ export function PatrolPage() {
                         <div className="text-xs text-ink-400">{formatDate(a.patrolSchedule.scheduledDate, i18n.language)}</div>
                       </div>
                     </div>
-                    <Badge tone={patrolStatusTone(a.status)} dot>
-                      {t(`patrolStatus.${a.status}`)}
-                    </Badge>
+                    <StatusLabel tone={patrolStatusTone(a.status)} label={t(`patrolStatus.${a.status}`)} />
                   </div>
 
                   <div className="mt-3 flex items-center gap-1.5 text-sm text-ink-500">

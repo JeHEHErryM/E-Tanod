@@ -56,6 +56,8 @@
     "welcome": "Good day!",
     "subtitle": "Sign in to continue to your console",
     "backHome": "Back to home page",
+    "noAccount": "No account?",
+    "signupCta": "Sign up",
     "username": "Username",
     "password": "Password",
     "usernamePlaceholder": "Enter your username",
@@ -64,6 +66,29 @@
     "demoTitle": "Demo accounts",
     "demoPassword": "Password for all:",
     "footer": "© {{year}} E-Tanod · Academic capstone / research system"
+  },
+  "signup": {
+    "title": "Create your account",
+    "subtitle": "Join your barangay's E-Tanod community",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Juan Dela Cruz",
+    "email": "Email address",
+    "phone": "Phone number (optional)",
+    "roleLabel": "I am a",
+    "roleResidentTitle": "Resident",
+    "roleResidentDesc": "Report incidents",
+    "roleTanodTitle": "Tanod",
+    "roleTanodDesc": "Run patrols",
+    "barangayLabel": "Barangay",
+    "barangayNone": "Select your barangay…",
+    "barangayError": "Could not load barangays.",
+    "confirmPassword": "Confirm password",
+    "submit": "Create account",
+    "approvalHint": "Your account must be approved by a barangay admin before you can sign in.",
+    "doneTitle": "Request received!",
+    "doneDesc": "Your account is now pending approval by your barangay admin. You will be able to sign in once it is approved.",
+    "backLanding": "Back to home",
+    "passwordMismatch": "Passwords do not match."
   },
   "dashboard": {
     "heroAdmin": "Command Center",
@@ -186,7 +211,18 @@
     "usernamePlaceholder": "juan.tanod",
     "tempPassword": "Temporary password",
     "passwordHint": "Min. 8 characters",
-    "primaryRole": "Primary role"
+    "primaryRole": "Primary role",
+    "barangayLabel": "Barangay",
+    "noBarangay": "No barangay assigned",
+    "pendingTitle": "Pending approvals",
+    "pendingDesc": "Newly registered accounts awaiting review",
+    "pendingHint": "Approving activates the account so the member can sign in.",
+    "approve": "Approve",
+    "requestedAt": "Requested {{time}}",
+    "manage": "Manage account",
+    "manageTitle": "Manage account",
+    "save": "Save changes",
+    "accountStatus": "Account status"
   },
   "barangays": {
     "title": "Barangays",
@@ -208,9 +244,9 @@
     "reload": "Reload page"
   },
   "landing": {
-    "badge": "Barangay Security Platform",
     "heroDesc": "GIS-based patrol management, secure QR checkpoints, incident mapping, and resident reporting — all in one place.",
     "ctaSignIn": "Sign in",
+    "ctaSignup": "Create account",
     "ctaFeatures": "See features",
     "featuresTitle": "Everything your barangay needs",
     "featuresDesc": "Built for tanods and barangay officials, E-Tanod keeps patrols accountable and incidents visible in real time.",
@@ -229,7 +265,6 @@
     "contactTitle": "Contact us",
     "contactDesc": "E-Tanod is developed as an academic capstone research system. For questions or feedback:",
     "contactCta": "Send an email",
-    "footerTag": "Barangay Security · Real-time patrol & incident management",
-    "demoHint": "You can sign in with the demo accounts shown on the sign-in page."
+    "footerTag": "Barangay Security · Real-time patrol & incident management"
   }
 }

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 type Variant =
   | 'primary'
@@ -7,7 +8,9 @@ type Variant =
   | 'ghost'
   | 'dark'
   | 'soft'
-  | 'outline';
+  | 'outline'
+  | 'light'
+  | 'onDark';
 
 type Size = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -19,16 +22,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
+  // Solid, high-contrast action buttons
   primary:
-    'bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800 shadow-brand-900/10',
-  secondary:
-    'bg-brand-50 text-brand-800 border border-brand-200 hover:bg-brand-100',
-  soft: 'bg-ink-100 text-ink-800 hover:bg-ink-200',
+    'bg-brand-700 text-white shadow-sm hover:bg-brand-800 active:bg-brand-900 shadow-brand-900/10',
+  danger: 'bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800',
   dark: 'bg-ink-900 text-white hover:bg-ink-950',
-  danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-  ghost: 'bg-transparent text-ink-600 hover:bg-ink-100 hover:text-ink-900',
-  outline:
-    'bg-transparent text-brand-700 border border-brand-200 hover:bg-brand-50',
+  light: 'bg-sand-50 text-brand-900 hover:bg-white',
+  // Tinted / outlined controls on light surfaces
+  secondary: 'bg-brand-50 text-brand-900 border border-brand-300 hover:bg-brand-100',
+  soft: 'bg-ink-100 text-ink-900 hover:bg-ink-200',
+  outline: 'border border-ink-300 bg-white text-brand-800 hover:bg-brand-50 hover:border-brand-400',
+  ghost: 'bg-transparent text-ink-700 hover:bg-ink-100 hover:text-ink-900',
+  // Translucent control for dark brand surfaces
+  onDark: 'border border-white/25 bg-white/10 text-white hover:bg-white/20',
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -48,7 +54,13 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex select-none items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={twMerge(
+        'inline-flex select-none items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45',
+        variantClasses[variant],
+        sizeClasses[size],
+        fullWidth ? 'w-full' : '',
+        className,
+      )}
       {...rest}
     >
       {children}

@@ -4,9 +4,10 @@ import { QrCode, MapPin, CheckCircle2, XCircle, Crosshair, ScanLine } from 'luci
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Badge, Card, Spinner, Input } from '@e-tanod/ui';
+import { Button, Card, Spinner, Input } from '@e-tanod/ui';
 import type { ScanResult } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
+import { StatusLabel } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatTime } from '@/app/lib/format';
 
@@ -113,7 +114,7 @@ export function ScanPage() {
       />
 
       {isTanod && active.data ? (
-        <Card title={t('scan.activePatrol')} icon={<ScanLine className="h-4 w-4" />} actions={<Badge tone="success" dot>{t('patrol.live')}</Badge>}>
+        <Card title={t('scan.activePatrol')} icon={<ScanLine className="h-4 w-4" />} actions={<StatusLabel tone="success" label={t('patrol.live')} />}>
           <p className="text-sm text-ink-600">
             <span className="font-semibold text-ink-900">{active.data.patrolAssignment.patrolSchedule.title}</span>
             <span className="text-ink-400"> ·{' '}
@@ -130,15 +131,11 @@ export function ScanPage() {
 
       <div className="space-y-4">
         <Card>
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex items-center justify-between gap-3">
             {hasLocation ? (
-              <Badge tone="success" dot>
-                {t('scan.locationCaptured')}
-              </Badge>
+              <StatusLabel tone="success" label={t('scan.locationCaptured')} />
             ) : (
-              <Badge tone="warning" dot>
-                {t('scan.locationRequired')}
-              </Badge>
+              <StatusLabel tone="warning" label={t('scan.locationRequired')} />
             )}
           </div>
 

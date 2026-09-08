@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Siren, Plus, MapPin, Clock, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Badge, Card, Spinner, EmptyState, Sheet, Input, Select, Textarea } from '@e-tanod/ui';
+import { Button, Card, Spinner, EmptyState, Sheet, Input, Select, Textarea } from '@e-tanod/ui';
 import type { IncidentStatus, IncidentSeverity, PaginatedResult } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
-import { incidentStatusTone, incidentSeverityTone } from '@/app/badges';
+import { StatusLabel, incidentStatusTone, incidentSeverityTone } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDateTime } from '@/app/lib/format';
 
@@ -138,11 +138,9 @@ export function IncidentsPage() {
                   <span className={`h-2.5 w-2.5 rounded-full ${severityDot[i.severity]}`} />
                   <span className="font-mono text-xs font-bold text-ink-400">{i.code}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge tone={incidentSeverityTone(i.severity)}>{t(`severity.${i.severity}`)}</Badge>
-                  <Badge tone={incidentStatusTone(i.status)} dot>
-                    {t(`status.${i.status}`)}
-                  </Badge>
+                <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+                  <StatusLabel tone={incidentSeverityTone(i.severity)} label={t(`severity.${i.severity}`)} />
+                  <StatusLabel tone={incidentStatusTone(i.status)} label={t(`status.${i.status}`)} />
                 </div>
               </div>
 
@@ -207,7 +205,7 @@ function IncidentActions({ incident, onDone }: { incident: IncidentItem; onDone:
         onChange={(e) => setNote(e.target.value)}
         placeholder={t('incidents.notePlaceholder')}
       />
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button size="sm" variant="outline" onClick={() => update.mutate('VERIFIED')} disabled={update.isPending}>
           <Check className="h-4 w-4" /> {t('incidents.verify')}
         </Button>

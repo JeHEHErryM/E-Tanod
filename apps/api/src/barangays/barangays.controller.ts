@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { BarangaysService } from './barangays.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Permissions } from '../common/decorators/roles.decorator';
+import { Permissions, Public } from '../common/decorators/roles.decorator';
 import { CreateBarangayDto, UpdateBarangayDto } from './dto/barangay.dto';
 import type { AuthUser } from '../auth/auth-user.interface';
 
@@ -9,8 +9,8 @@ import type { AuthUser } from '../auth/auth-user.interface';
 export class BarangaysController {
   constructor(private readonly barangays: BarangaysService) {}
 
+  @Public()
   @Get()
-  @Permissions('barangay.read')
   findAll() {
     return this.barangays.findAll();
   }

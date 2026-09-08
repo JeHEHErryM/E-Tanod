@@ -56,9 +56,10 @@ export class UsersService {
     return this.toDto(user);
   }
 
-  async findAll(params: { page: number; pageSize: number; role?: Role; search?: string; barangayId?: string }) {
+  async findAll(params: { page: number; pageSize: number; role?: Role; search?: string; barangayId?: string; isActive?: boolean }) {
     const where: Prisma.UserWhereInput = {};
     if (params.role) where.roles = { some: { role: { name: params.role } } };
+    if (params.isActive !== undefined) where.isActive = params.isActive;
     if (params.search) {
       where.OR = [
         { username: { contains: params.search, mode: 'insensitive' } },
@@ -122,6 +123,12 @@ export class UsersService {
       });
     }
 
+    if (dto.isActive === true && !user.isActive) {
+      await this.audit.log(actorId, 'USER_APPROVED', 'user', id, { username: user.username });
+    } else if (dto.isActive === false && user.isActive) {
+      await this.audit.log(actorId, 'USER_DEACTIVATED', 'user', id, { username: user.username });
+    }
+
     const updated = await this.prisma.user.findUnique({ where: { id }, include: userInclude });
     return this.toDto(updated!);
   }
@@ -130,12 +137,20 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
+    // Pending (never-approved) accounts can be hard-deleted safely — they have
+    // no assignments, sessions, or incident data attached yet.
+    if (!user.isActive) {
+      await this.prisma.user.delete({ where: { id } });
+      await this.audit.log(actorId, 'ACCOUNT_REJECTED', 'user', id, { username: user.username });
+      return { success: true };
+    }
+
     await this.prisma.user.update({
       where: { id },
-      data: { isActive: false },
+      data: { isActive: false, isVerified: false },
     });
 
-    await this.audit.log(actorId, 'USER_CREATED', 'user', id, { action: 'deactivated' });
+    await this.audit.log(actorId, 'USER_DEACTIVATED', 'user', id, { username: user.username });
     return { success: true };
   }
 

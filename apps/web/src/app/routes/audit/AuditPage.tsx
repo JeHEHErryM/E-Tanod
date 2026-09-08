@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ScrollText, Fingerprint, Globe } from 'lucide-react';
 import { api, getErrorMessage } from '@/services/api';
-import { Badge, Spinner, EmptyState } from '@e-tanod/ui';
+import { Spinner, EmptyState } from '@e-tanod/ui';
+import { StatusLabel } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDateTime } from '@/app/lib/format';
 
@@ -20,13 +21,15 @@ interface AuditEntry {
 const actionTone = (action: string) =>
   action.startsWith('LOGIN') || action.startsWith('LOGOUT')
     ? 'info'
-    : ['USER_CREATED', 'ROLE_CHANGED'].includes(action)
+    : ['USER_CREATED', 'ROLE_CHANGED', 'USER_UPDATED', 'USER_APPROVED'].includes(action)
     ? 'brand'
+    : ['ACCOUNT_REGISTERED', 'ACCOUNT_REJECTED', 'USER_DEACTIVATED'].includes(action)
+    ? 'warning'
     : action.includes('INCIDENT') && action.includes('CREATED')
     ? 'warning'
     : action.includes('DELETED')
     ? 'danger'
-    : 'default';
+    : ('default' as const);
 
 export function AuditPage() {
   const { t, i18n } = useTranslation();
@@ -65,7 +68,7 @@ export function AuditPage() {
                 <li key={entry.id} className="relative">
                   <span className="absolute -left-[31px] flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-brand-400 shadow" />                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone={actionTone(entry.action)}>{entry.action}</Badge>
+                      <StatusLabel tone={actionTone(entry.action)} label={entry.action} />
                       {entry.actor ? (
                         <span className="text-sm font-semibold text-ink-800">
                           {entry.actor.fullName || entry.actor.username}

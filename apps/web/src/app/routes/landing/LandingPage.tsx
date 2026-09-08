@@ -37,6 +37,12 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <LanguageToggle />
             <button
+              onClick={() => navigate('/signup')}
+              className="hidden h-10 items-center justify-center rounded-xl px-3.5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-50 sm:inline-flex"
+            >
+              {t('landing.ctaSignup')}
+            </button>
+            <button
               onClick={() => navigate('/login')}
               className="inline-flex h-10 items-center justify-center rounded-xl bg-brand-700 px-4 text-sm font-bold text-sand-50 transition-colors hover:bg-brand-800"
             >
