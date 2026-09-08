@@ -58,6 +58,8 @@
     "backHome": "Back to home page",
     "noAccount": "No account?",
     "signupCta": "Sign up",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "username": "Username",
     "password": "Password",
     "usernamePlaceholder": "Enter your username",

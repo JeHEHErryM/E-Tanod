@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api, getErrorMessage } from '@/services/api';
-import { Button, Input, Select, Spinner } from '@e-tanod/ui';
+import { Button, Input, PasswordInput, Select, Spinner } from '@e-tanod/ui';
 import type { Barangay, RoleName } from '@e-tanod/types';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
@@ -203,9 +203,8 @@ export function SignupPage() {
               </p>
             ) : null}
 
-            <Input
+            <PasswordInput
               label={t('login.password')}
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -213,10 +212,11 @@ export function SignupPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               leading={<Lock className="h-5 w-5" />}
+              showLabel={t('login.showPassword')}
+              hideLabel={t('login.hidePassword')}
             />
-            <Input
+            <PasswordInput
               label={t('signup.confirmPassword')}
-              type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
@@ -224,6 +224,8 @@ export function SignupPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               leading={<Lock className="h-5 w-5" />}
+              showLabel={t('login.showPassword')}
+              hideLabel={t('login.hidePassword')}
             />
 
             {error ? (

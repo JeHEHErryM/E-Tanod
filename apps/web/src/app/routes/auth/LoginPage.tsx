@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Lock, User, MapPin, QrCode, Users, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { getErrorMessage } from '@/services/api';
-import { Button, Input, Spinner } from '@e-tanod/ui';
+import { Button, Input, PasswordInput, Spinner } from '@e-tanod/ui';
 import { AppLogo } from '@/app/components/AppLogo';
 import type { RoleName } from '@e-tanod/types';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
@@ -115,15 +115,16 @@ export function LoginPage() {
               placeholder={t('login.usernamePlaceholder')}
               leading={<User className="h-5 w-5" />}
             />
-            <Input
+            <PasswordInput
               label={t('login.password')}
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               placeholder="••••••••"
               leading={<Lock className="h-5 w-5" />}
+              showLabel={t('login.showPassword')}
+              hideLabel={t('login.hidePassword')}
             />
 
             {error ? (

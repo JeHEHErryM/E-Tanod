@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Users, Search, UserPlus, User, Check, X, Settings2, MapPin } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
-import { Card, Button, Spinner, EmptyState, Sheet, Input, Select } from '@e-tanod/ui';
+import { Card, Button, Spinner, EmptyState, Sheet, Input, PasswordInput, Select } from '@e-tanod/ui';
 import type { Barangay, PaginatedResult } from '@e-tanod/types';
 import type { RoleName } from '@e-tanod/types';
 import { roleMeta } from '@/app/roles';
@@ -296,7 +296,7 @@ function CreateUserSheet({
       <div className="space-y-4">
         <Input label={t('users.fullName')} value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder={t('users.fullNamePlaceholder')} leading={<User className="h-5 w-5" />} />
         <Input label={t('users.username')} value={username} onChange={(e) => setUsername(e.target.value)} required placeholder={t('users.usernamePlaceholder')} leading={<Users className="h-5 w-5" />} />
-        <Input label={t('users.tempPassword')} type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder={t('users.passwordHint')} />
+        <PasswordInput label={t('users.tempPassword')} minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder={t('users.passwordHint')} showLabel={t('login.showPassword')} hideLabel={t('login.hidePassword')} />
         <Select label={t('users.primaryRole')} value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
           <option value="TANOD">{t('role.TANOD')}</option>
           <option value="BARANGAY_ADMIN">{t('role.BARANGAY_ADMIN')}</option>
