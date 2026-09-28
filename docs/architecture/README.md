@@ -235,6 +235,24 @@ Increment 1 delivers the foundations:
 
 ---
 
+## 10. Runtime Environment Variables
+
+Set in the hosting platform (Vercel for the web app, Railway for the API). Never commit
+real values; `.env.example` files list placeholders.
+
+| Variable | App | Purpose |
+| --- | --- | --- |
+| `VITE_API_URL` | web | Base URL of the API, e.g. `https://e-tanod-production.up.railway.app/api` |
+| `VITE_SOCKET_URL` | web | Socket.io origin (defaults to `VITE_API_URL`) |
+| `VITE_MAPBOX_PUBLIC_TOKEN` | web | Public Mapbox token for the incident map/heatmap (inlined at build time; must be set for a new Vercel deployment, scoped to Production) |
+| `UPLOAD_DIR` | api | Directory for incident photo uploads (default `./uploads`) |
+| `DATABASE_URL` | api | PostgreSQL connection string |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET` | api | Token signing secrets |
+| `CORS_ORIGIN` | api | Comma-separated allowed origins |
+
+> Note: changing a `VITE_*` variable on Vercel does not trigger a rebuild — trigger a
+> redeploy explicitly after adding/editing it.
+
 ## Security Architecture Summary
 
 - Argon2 password hashing (never plaintext).
