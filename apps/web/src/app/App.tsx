@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import type { RoleName } from '@e-tanod/types';
@@ -12,8 +12,22 @@ import { BarangaysPage } from '@/app/routes/barangays/BarangaysPage';
 import { AuditPage } from '@/app/routes/audit/AuditPage';
 import { PatrolPage } from '@/app/routes/patrol/PatrolPage';
 import { ScanPage } from '@/app/routes/scan/ScanPage';
+import { CheckpointsPage } from '@/app/routes/checkpoints/CheckpointsPage';
+import { ResidentsPage } from '@/app/routes/residents/ResidentsPage';
 import { IncidentsPage } from '@/app/routes/incidents/IncidentsPage';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
+
+const GisPage = lazy(() =>
+  import('@/app/routes/gis/GisPage').then((m) => ({ default: m.GisPage })),
+);
+
+function PageFallback() {
+  return (
+    <div className="flex items-center justify-center py-24 text-sm font-semibold text-ink-400">
+      Loading…
+    </div>
+  );
+}
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -49,6 +63,12 @@ function SignupRoute() {
   return <SignupPage />;
 }
 
+function RoleHome() {
+  const role = useAuthStore((s) => s.user?.primaryRole);
+  if (role === 'RESIDENT') return <Navigate to="/residents" replace />;
+  return <DashboardPage />;
+}
+
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const fetchMe = useAuthStore((s) => s.fetchMe);
@@ -73,7 +93,7 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<RoleHome />} />
 
           <Route
             path="/patrol"
@@ -92,9 +112,35 @@ export default function App() {
             }
           />
           <Route
+            path="/checkpoints"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <CheckpointsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/gis"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <Suspense fallback={<PageFallback />}>
+                  <GisPage />
+                </Suspense>
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/residents"
+            element={
+              <RequireRole roles={['RESIDENT']}>
+                <ResidentsPage />
+              </RequireRole>
+            }
+          />
+          <Route
             path="/incidents"
             element={
-              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD', 'RESIDENT']}>
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
                 <IncidentsPage />
               </RequireRole>
             }

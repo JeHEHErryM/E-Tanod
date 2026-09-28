@@ -2,12 +2,29 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { IncidentStatus, Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import sharp from 'sharp';
+import { IncidentStatus, Prisma, type Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SocketService } from '../socket/socket.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateIncidentDto, UpdateIncidentStatusDto } from './dto/incident.dto';
+
+interface ReporterContext {
+  id: string;
+  username: string;
+  primaryRole: Role;
+  barangayId?: string | null;
+}
+
+const REPORTING_ROLES: Role[] = ['SUPER_ADMIN', 'BARANGAY_ADMIN'];
+const MAX_ATTACHMENTS = 5;
+const ALLOWED_MIME = /^image\/(jpeg|png|webp|heic|heif)$/;
 
 @Injectable()
 export class IncidentService {
@@ -15,7 +32,12 @@ export class IncidentService {
     private readonly prisma: PrismaService,
     private readonly socket: SocketService,
     private readonly audit: AuditService,
+    private readonly config: ConfigService,
   ) {}
+
+  private uploadDir() {
+    return this.config.get<string>('UPLOAD_DIR', join(process.cwd(), 'uploads'));
+  }
 
   async categories() {
     return this.prisma.incidentCategory.findMany({
@@ -43,6 +65,7 @@ export class IncidentService {
           category: { select: { id: true, name: true, code: true } },
           barangay: { select: { id: true, name: true } },
           createdBy: { select: { id: true, fullName: true, username: true } },
+          attachments: { select: { id: true, url: true, fileName: true } },
         },
         orderBy: { reportedAt: 'desc' },
         skip: (query.page - 1) * query.pageSize,
@@ -79,11 +102,25 @@ export class IncidentService {
     return incident;
   }
 
-  async create(dto: CreateIncidentDto, reporter: { id: string; username: string }) {
+  async create(dto: CreateIncidentDto, reporter: ReporterContext) {
     const category = await this.prisma.incidentCategory.findUnique({
       where: { id: dto.categoryId },
     });
     if (!category) throw new BadRequestException('Invalid incident category');
+
+    const wantAnonymous = dto.isAnonymous === true;
+    const source = wantAnonymous
+      ? 'ANONYMOUS'
+      : reporter.primaryRole === 'RESIDENT'
+        ? 'RESIDENT'
+        : REPORTING_ROLES.includes(reporter.primaryRole)
+          ? 'ADMIN'
+          : 'TANOD';
+
+    const barangayId =
+      reporter.primaryRole === 'SUPER_ADMIN'
+        ? dto.barangayId ?? null
+        : (dto.barangayId ?? reporter.barangayId ?? null);
 
     const code = await this.generateCode();
 
@@ -94,9 +131,10 @@ export class IncidentService {
         description: dto.description,
         latitude: dto.latitude ?? null,
         longitude: dto.longitude ?? null,
-        barangayId: dto.barangayId ?? null,
+        barangayId,
         severity: dto.severity ?? category.severity,
-        source: 'TANOD',
+        source,
+        isAnonymous: wantAnonymous,
         createdById: reporter.id,
         statusHistory: {
           create: {
@@ -122,6 +160,124 @@ export class IncidentService {
     });
 
     return incident;
+  }
+
+  async mine(userId: string, page: number, pageSize: number) {
+    const where: Prisma.IncidentWhereInput = { createdById: userId };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.incident.findMany({
+        where,
+        include: {
+          category: { select: { id: true, name: true, code: true } },
+          barangay: { select: { id: true, name: true } },
+          attachments: { select: { id: true, url: true, fileName: true } },
+        },
+        orderBy: { reportedAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.incident.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  async addAttachments(
+    id: string,
+    files: Express.Multer.File[],
+    actor: ReporterContext,
+  ) {
+    const incident = await this.prisma.incident.findUnique({ where: { id } });
+    if (!incident) throw new NotFoundException('Incident not found');
+
+    const isOwner =
+      incident.createdById === actor.id ||
+      REPORTING_ROLES.includes(actor.primaryRole);
+    if (!isOwner) throw new ForbiddenException('You cannot attach files to this incident');
+
+    const existing = await this.prisma.incidentAttachment.count({
+      where: { incidentId: id },
+    });
+    const remaining = MAX_ATTACHMENTS - existing;
+    const accepted = files.slice(0, Math.max(remaining, 0));
+    if (accepted.length === 0) {
+      throw new BadRequestException(
+        `Only ${MAX_ATTACHMENTS} attachments are allowed per incident`,
+      );
+    }
+
+    const uploadDir = this.uploadDir();
+    const incidentDir = join(uploadDir, 'incidents');
+    await mkdir(incidentDir, { recursive: true });
+
+    const saved: Prisma.IncidentAttachmentCreateManyInput[] = [];
+    const failed: string[] = [];
+
+    for (const file of accepted) {
+      const mimeMatch = ALLOWED_MIME.test(file.mimetype ?? '');
+      if (!mimeMatch) {
+        failed.push(file.originalname);
+        continue;
+      }
+      try {
+        const name = randomUUID();
+        const fullPath = join(incidentDir, `${name}.jpg`);
+        const thumbPath = join(incidentDir, `${name}-thumb.jpg`);
+
+        const image = sharp(file.buffer, { failOn: 'none' }).rotate();
+        const meta = await image.metadata();
+        if (!meta.width || !meta.height) {
+          failed.push(file.originalname);
+          continue;
+        }
+
+        const resized = await image
+          .resize({ width: Math.min(meta.width, 1600), withoutEnlargement: true })
+          .jpeg({ quality: 80, mozjpeg: true })
+          .toBuffer();
+        const thumbnail = await image
+          .resize({ width: Math.min(meta.width, 480), withoutEnlargement: true })
+          .jpeg({ quality: 72 })
+          .toBuffer();
+
+        await Promise.all([
+          writeFile(fullPath, resized),
+          writeFile(thumbPath, thumbnail),
+        ]);
+
+        saved.push({
+          incidentId: id,
+          url: `/uploads/incidents/${name}.jpg`,
+          mimeType: 'image/jpeg',
+          sizeBytes: resized.length,
+          fileName: file.originalname,
+        });
+      } catch {
+        failed.push(file.originalname);
+      }
+    }
+
+    if (saved.length === 0) {
+      throw new BadRequestException('No valid image files were uploaded');
+    }
+
+    await this.prisma.incidentAttachment.createMany({ data: saved });
+
+    await this.audit.log(actor.id, 'INCIDENT_UPDATED', 'Incident', id, {
+      attachmentsAdded: saved.length,
+    });
+
+    return {
+      added: saved.length,
+      skipped: failed.length,
+      files: saved,
+    };
   }
 
   async updateStatus(

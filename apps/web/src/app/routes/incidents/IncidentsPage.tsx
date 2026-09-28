@@ -11,12 +11,19 @@ import { isAdmin } from '@/app/roles';
 import { StatusLabel, incidentStatusTone, incidentSeverityTone } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDateTime } from '@/app/lib/format';
+import { uploadUrl, attachmentThumb } from '@/lib/config';
 
 interface IncidentCategory {
   id: string;
   name: string;
   code: string;
   severity: IncidentSeverity;
+}
+
+interface IncidentAttachment {
+  id: string;
+  url: string;
+  fileName: string;
 }
 
 interface IncidentItem {
@@ -31,6 +38,7 @@ interface IncidentItem {
   category: { id: string; name: string; code: string };
   barangay: { id: string; name: string } | null;
   createdBy: { id: string; fullName: string; username: string } | null;
+  attachments?: IncidentAttachment[];
 }
 
 const severityDot: Record<IncidentSeverity, string> = {
@@ -151,6 +159,22 @@ export function IncidentsPage() {
                   </span>
                 </div>
                 <p className="text-sm leading-relaxed text-ink-700">{i.description}</p>
+
+                {i.attachments && i.attachments.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {i.attachments.map((a) => (
+                      <a
+                        key={a.id}
+                        href={uploadUrl(a.url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block h-16 w-16 overflow-hidden rounded-lg border border-ink-200 transition-transform hover:scale-105"
+                      >
+                        <img src={attachmentThumb(a.url)} alt={a.fileName} className="h-full w-full object-cover" loading="lazy" />
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
                   <span className="inline-flex items-center gap-1">

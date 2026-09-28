@@ -11,6 +11,7 @@ import { SocketModule } from './socket/socket.module';
 import { PatrolModule } from './patrol/patrol.module';
 import { CheckpointModule } from './checkpoint/checkpoint.module';
 import { IncidentModule } from './incident/incident.module';
+import { GisModule } from './gis/gis.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { IncidentModule } from './incident/incident.module';
     PatrolModule,
     CheckpointModule,
     IncidentModule,
+    GisModule,
   ],
 })
 export class AppModule {}

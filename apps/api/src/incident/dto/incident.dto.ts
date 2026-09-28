@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -35,6 +36,10 @@ export class CreateIncidentDto {
   @IsOptional()
   @IsEnum(IncidentSeverity)
   severity?: IncidentSeverity;
+
+  @IsOptional()
+  @IsBoolean()
+  isAnonymous?: boolean;
 }
 
 export class UpdateIncidentStatusDto {

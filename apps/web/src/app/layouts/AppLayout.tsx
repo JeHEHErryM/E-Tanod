@@ -4,7 +4,10 @@ import {
   LayoutDashboard,
   ShieldHalf,
   QrCode,
+  MapPin,
+  Map as MapIcon,
   Siren,
+  Home,
   Users,
   Building2,
   ScrollText,
@@ -34,14 +37,17 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard, roles: 'all', end: true },
   { to: '/patrol', labelKey: 'nav.patrol', icon: ShieldHalf, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
   { to: '/scan', labelKey: 'nav.scan', icon: QrCode, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
-  { to: '/incidents', labelKey: 'nav.incidents', icon: Siren, roles: 'all' },
+  { to: '/checkpoints', labelKey: 'nav.checkpoints', icon: MapPin, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
+  { to: '/gis', labelKey: 'nav.gis', icon: MapIcon, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
+  { to: '/incidents', labelKey: 'nav.incidents', icon: Siren, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/residents', labelKey: 'nav.residents', icon: Home, roles: ['RESIDENT'] },
   { to: '/users', labelKey: 'nav.users', icon: Users, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/barangays', labelKey: 'nav.barangays', icon: Building2, roles: ['SUPER_ADMIN'] },
   { to: '/audit', labelKey: 'nav.audit', icon: ScrollText, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
 ];
 
 // Which items appear in the mobile bottom tab bar (field users)
-const BOTTOM_TABS = ['/', '/patrol', '/scan', '/incidents'];
+const BOTTOM_TABS = ['/', '/patrol', '/scan', '/incidents', '/residents'];
 
 function visibleFor(user: RoleName | undefined, item: NavItem) {
   return item.roles === 'all' || (user ? item.roles.includes(user) : false);

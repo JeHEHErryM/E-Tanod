@@ -6,7 +6,10 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/roles.decorator';
 import type { AuthUser } from '../auth/auth-user.interface';
@@ -18,7 +21,7 @@ export class IncidentController {
   constructor(private readonly incidents: IncidentService) {}
 
   @Get('categories')
-  @Permissions('incident.read', 'incident.report')
+  @Permissions('incident.read', 'incident.report', 'resident.report')
   categories() {
     return this.incidents.categories();
   }
@@ -35,16 +38,47 @@ export class IncidentController {
     });
   }
 
+  @Get('mine')
+  @Permissions('resident.track', 'incident.read')
+  mine(@Query() query: ListIncidentQueryDto, @CurrentUser() actor: AuthUser) {
+    return this.incidents.mine(actor.id, query.page, query.pageSize);
+  }
+
   @Get(':id')
-  @Permissions('incident.read', 'incident.review')
+  @Permissions('incident.read', 'incident.review', 'resident.track')
   getOne(@Param('id') id: string) {
     return this.incidents.getOne(id);
   }
 
   @Post()
-  @Permissions('incident.report')
+  @Permissions('incident.report', 'resident.report')
   create(@Body() dto: CreateIncidentDto, @CurrentUser() actor: AuthUser) {
-    return this.incidents.create(dto, { id: actor.id, username: actor.username });
+    return this.incidents.create(dto, {
+      id: actor.id,
+      username: actor.username,
+      primaryRole: actor.primaryRole,
+      barangayId: actor.barangayId,
+    });
+  }
+
+  @Post(':id/attachments')
+  @UseInterceptors(
+    FileInterceptor('files', {
+      limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+    }),
+  )
+  @Permissions('incident.read', 'incident.review', 'resident.track')
+  addAttachments(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return this.incidents.addAttachments(id, files ?? [], {
+      id: actor.id,
+      username: actor.username,
+      primaryRole: actor.primaryRole,
+      barangayId: actor.barangayId,
+    });
   }
 
   @Patch(':id/status')
