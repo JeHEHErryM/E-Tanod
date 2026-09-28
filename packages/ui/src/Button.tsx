@@ -26,12 +26,12 @@ const variantClasses: Record<Variant, string> = {
   primary:
     'bg-brand-700 text-white shadow-sm hover:bg-brand-800 active:bg-brand-900 shadow-brand-900/10',
   danger: 'bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800',
-  dark: 'bg-ink-900 text-white hover:bg-ink-950',
-  light: 'bg-sand-50 text-brand-900 hover:bg-white',
+  dark: 'bg-ink-900 text-white hover:bg-ink-950 dark:bg-white/15 dark:text-white dark:hover:bg-white/25',
+  light: 'bg-sand-50 text-brand-900 hover:bg-white dark:bg-white/15 dark:text-white dark:hover:bg-white/25',
   // Tinted / outlined controls on light surfaces
-  secondary: 'bg-brand-50 text-brand-900 border border-brand-300 hover:bg-brand-100',
+  secondary: 'bg-brand-50 text-brand-900 border border-brand-300 hover:bg-brand-100 dark:bg-brand-950/40 dark:text-brand-100 dark:border-brand-700 dark:hover:bg-brand-950/60',
   soft: 'bg-ink-100 text-ink-900 hover:bg-ink-200',
-  outline: 'border border-ink-300 bg-white text-brand-800 hover:bg-brand-50 hover:border-brand-400',
+  outline: 'border border-ink-300 bg-white text-brand-800 hover:bg-brand-50 hover:border-brand-400 dark:bg-white/5 dark:border-ink-400 dark:text-brand-200 dark:hover:bg-brand-950/40 dark:hover:border-brand-500',
   ghost: 'bg-transparent text-ink-700 hover:bg-ink-100 hover:text-ink-900',
   // Translucent control for dark brand surfaces
   onDark: 'border border-white/25 bg-white/10 text-white hover:bg-white/20',

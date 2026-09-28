@@ -25,6 +25,7 @@ export class AuthService {
     });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user.isVerified) throw new UnauthorizedException('Account is pending approval');
     if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
 
     const valid = await argon2.verify(user.passwordHash, password);
@@ -94,6 +95,9 @@ export class AuthService {
     }
 
     const user = stored.user;
+    if (!user.isVerified || !user.isActive) {
+      throw new UnauthorizedException('Account is not active');
+    }
     const roles = user.roles.map((r) => r.role.name);
     const primaryRole = (user.roles.find((r) => r.roleId === user.primaryRoleId)?.role.name ??
       roles[0]) as AuthUser['primaryRole'];

@@ -182,7 +182,11 @@ export function IncidentsPage() {
                     {formatDateTime(i.reportedAt, i18n.language)}
                   </span>
                   {i.barangay ? <span>· {i.barangay.name}</span> : null}
-                  {i.createdBy ? <span>· {i.createdBy.fullName}</span> : null}
+                  {i.createdBy ? (
+                    <span>· {i.createdBy.fullName}</span>
+                  ) : (
+                    <span>· {t('incidents.anonymousReporter')}</span>
+                  )}
                   {i.latitude != null ? (
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5" />

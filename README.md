@@ -72,7 +72,7 @@ The web app runs at `http://localhost:5173` and the API at `http://localhost:300
 
 ## Demo Accounts
 
-Seed data (password: `DemoPass123!`) — clearly marked as DEMO, not real Mamburao data:
+Seed data (password: `Demo123!`) — clearly marked as DEMO, not real Mamburao data:
 
 | Username      | Role             |
 |---------------|------------------|

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,8 +22,14 @@ export class PatrolService {
     private readonly audit: AuditService,
   ) {}
 
-  async createSchedule(dto: CreatePatrolScheduleDto, actorId: string) {
+  async createSchedule(dto: CreatePatrolScheduleDto, actorId: string, barangayScope?: string | null) {
     const { tanodIds, checkpoints, ...data } = dto;
+    if (barangayScope) {
+      if (dto.barangayId && dto.barangayId !== barangayScope) {
+        throw new ForbiddenException('Cannot create schedules outside your barangay');
+      }
+      data.barangayId = barangayScope;
+    }
 
     const schedule = await this.prisma.patrolSchedule.create({
       data: {
@@ -79,9 +86,13 @@ export class PatrolService {
     pageSize: number;
     barangayId?: string;
     status?: string;
-  }) {
+  }, barangayScope?: string | null) {
     const where: Prisma.PatrolScheduleWhereInput = {};
-    if (query.barangayId) where.barangayId = query.barangayId;
+    if (barangayScope) {
+      where.barangayId = barangayScope;
+    } else if (query.barangayId) {
+      where.barangayId = query.barangayId;
+    }
     if (query.status) {
       where.assignments = { some: { status: query.status as PatrolStatus } };
     }
@@ -113,7 +124,7 @@ export class PatrolService {
     };
   }
 
-  async getSchedule(id: string) {
+  async getSchedule(id: string, barangayScope?: string | null) {
     const schedule = await this.prisma.patrolSchedule.findUnique({
       where: { id },
       include: {
@@ -125,12 +136,18 @@ export class PatrolService {
       },
     });
     if (!schedule) throw new NotFoundException('Patrol schedule not found');
+    if (barangayScope && schedule.barangayId !== barangayScope) {
+      throw new ForbiddenException('Schedule is outside your barangay');
+    }
     return schedule;
   }
 
-  async updateSchedule(id: string, dto: UpdatePatrolScheduleDto, actorId: string) {
+  async updateSchedule(id: string, dto: UpdatePatrolScheduleDto, actorId: string, barangayScope?: string | null) {
     const existing = await this.prisma.patrolSchedule.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Patrol schedule not found');
+    if (barangayScope && existing.barangayId !== barangayScope) {
+      throw new ForbiddenException('Schedule is outside your barangay');
+    }
 
     const { tanodIds, checkpoints, ...data } = dto;
 
@@ -139,15 +156,31 @@ export class PatrolService {
         await tx.patrolScheduleCheckpoint.deleteMany({ where: { patrolScheduleId: id } });
       }
       if (tanodIds) {
-        await tx.patrolAssignment.deleteMany({ where: { patrolScheduleId: id } });
-        await tx.patrolAssignment.createMany({
-          data: tanodIds.map((tanodId) => ({
-            patrolScheduleId: id,
-            tanodId,
-            status: PatrolStatus.SCHEDULED,
-            scheduledAt: new Date(),
-          })),
+        const existingAssignments = await tx.patrolAssignment.findMany({
+          where: { patrolScheduleId: id },
+          include: { _count: { select: { sessions: true } } },
         });
+        // Never delete assignments that already have sessions (they carry
+        // patrol evidence). Only clean up never-started SCHEDULED rows.
+        await tx.patrolAssignment.deleteMany({
+          where: {
+            patrolScheduleId: id,
+            status: PatrolStatus.SCHEDULED,
+            tanodId: { notIn: tanodIds },
+          },
+        });
+        const currentTanods = new Set(existingAssignments.map((a) => a.tanodId));
+        const toAdd = tanodIds.filter((t) => !currentTanods.has(t));
+        if (toAdd.length > 0) {
+          await tx.patrolAssignment.createMany({
+            data: toAdd.map((tanodId) => ({
+              patrolScheduleId: id,
+              tanodId,
+              status: PatrolStatus.SCHEDULED,
+              scheduledAt: new Date(),
+            })),
+          });
+        }
       }
       return tx.patrolSchedule.update({
         where: { id },
@@ -223,6 +256,9 @@ export class PatrolService {
     if (assignment.tanodId !== tanodId) {
       throw new BadRequestException('Assignment does not belong to this tanod');
     }
+    if (assignment.status !== PatrolStatus.SCHEDULED) {
+      throw new BadRequestException('Only scheduled patrols can be started');
+    }
 
     const existingActive = await this.prisma.patrolSession.findFirst({
       where: { tanodId, status: PatrolStatus.ACTIVE },
@@ -261,7 +297,11 @@ export class PatrolService {
   async endPatrol(sessionId: string, notes: string | undefined, tanodId: string) {
     const session = await this.prisma.patrolSession.findUnique({
       where: { id: sessionId },
-      include: { patrolAssignment: { include: { patrolSchedule: true } } },
+      include: {
+        patrolAssignment: {
+          include: { patrolSchedule: { include: { requiredCheckpoints: true } } },
+        },
+      },
     });
     if (!session) throw new NotFoundException('Patrol session not found');
     if (session.tanodId !== tanodId) {
@@ -271,15 +311,20 @@ export class PatrolService {
       throw new BadRequestException('Patrol session is not active');
     }
 
-    const remaining = await this.prisma.checkpointScan.count({
+    const validScans = await this.prisma.checkpointScan.count({
       where: {
         patrolSessionId: sessionId,
-        result: { in: [ScanResult.VALID, ScanResult.DUPLICATE] },
+        result: ScanResult.VALID,
       },
     });
 
-    // If no valid checkpoint was verified, mark the patrol incomplete.
-    const completed = remaining > 0 ? PatrolStatus.COMPLETED : PatrolStatus.INCOMPLETE;
+    // A patrol is COMPLETED only when EVERY required checkpoint was verified.
+    // Duplicate/outside-radius scans never count towards completion.
+    const required = session.patrolAssignment.patrolSchedule.requiredCheckpoints?.length ?? 0;
+    const completed =
+      required === 0 || validScans >= required
+        ? PatrolStatus.COMPLETED
+        : PatrolStatus.INCOMPLETE;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.patrolSession.update({

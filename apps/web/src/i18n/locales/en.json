@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "patrol": "Patrol",
+    "schedules": "Schedules",
     "scan": "Scan",
     "checkpoints": "Checkpoints",
     "gis": "Incident Map",
@@ -14,7 +15,9 @@
   "layout": {
     "barangaySecurity": "Barangay Security Management",
     "openMenu": "Open menu",
-    "logout": "Log out"
+    "logout": "Log out",
+    "themeDark": "Switch to dark mode",
+    "themeLight": "Switch to light mode"
   },
   "role": {
     "SUPER_ADMIN": "Super Admin",
@@ -145,6 +148,43 @@
     "endPlaceholder": "e.g. Completed all checkpoints, no incidents encountered.",
     "confirmEnd": "Confirm End"
   },
+  "schedules": {
+    "title": "Patrol Schedules",
+    "desc": "Create and manage patrol schedules, assignments, and required checkpoints.",
+    "add": "New schedule",
+    "emptyTitle": "No schedules yet",
+    "emptyDesc": "Create a patrol schedule to assign tanods to verified checkpoints.",
+    "edit": "Edit schedule",
+    "createTitle": "New patrol schedule",
+    "editTitle": "Edit patrol schedule",
+    "create": "Create schedule",
+    "save": "Save changes",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Night patrol shift",
+    "titleRequired": "Title is required.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional notes about this schedule",
+    "barangayLabel": "Barangay",
+    "barangayNone": "Select a barangay",
+    "barangayRequired": "Barangay is required.",
+    "dateLabel": "Date",
+    "startLabel": "Start time",
+    "endLabel": "End time",
+    "whenRequired": "Date, start time, and end time are required.",
+    "tanodsLabel": "Assign tanods",
+    "loadingTanods": "Loading tanods…",
+    "noTanods": "No tanods assigned yet",
+    "noTanodsAvailable": "No active tanods in this barangay.",
+    "checkpointsLabel": "Checkpoints",
+    "loadingCheckpoints": "Loading checkpoints…",
+    "noCheckpointsAvailable": "No active checkpoints in this barangay.",
+    "checkpointsHint": "Checkpoints are verified in the order you select.",
+    "checkpointsRequired": "At least one checkpoint is required.",
+    "statusACTIVE": "Active",
+    "statusCOMPLETED": "Completed",
+    "statusPARTIAL": "In progress",
+    "statusSCHEDULED": "Scheduled"
+  },
   "scan": {
     "title": "Scan Checkpoint",
     "tanodDesc": "Verify a checkpoint during your patrol",
@@ -158,6 +198,11 @@
     "locating": "Locating…",
     "qrToken": "QR token",
     "qrPlaceholder": "Paste scanned QR value (e.g. qr_cp_001)",
+    "cameraOpen": "Scan with camera",
+    "or": "Or",
+    "cameraTitle": "Point your camera at the checkpoint QR code",
+    "cameraDenied": "Camera access was denied. Allow camera access or enter the token below.",
+    "cameraClose": "Close camera",
     "verify": "Verify Checkpoint",
     "onlyTanod": "Only an active patrol tanod can verify a checkpoint.",
     "scannedAt": "Scanned at {{time}}",
@@ -177,6 +222,7 @@
     "fieldDesc": "Report and track incidents",
     "report": "Report",
     "all": "All",
+    "anonymousReporter": "Anonymous",
     "emptyTitle": "No incidents yet",
     "emptyFiltered": "No {{status}} incidents",
     "emptyDesc": "Incident reports and updates will appear here.",
@@ -248,6 +294,7 @@
     "deleteConfirm": "Delete this checkpoint? Its QR code will stop working.",
     "regenerate": "Regenerate QR code",
     "copyQr": "Copy QR",
+    "showQr": "Show QR",
     "copied": "Copied",
     "code": "Code",
     "name": "Name",
@@ -334,6 +381,7 @@
     "reload": "Reload page"
   },
   "landing": {
+    "badge": "Barangay Security Platform",
     "heroDesc": "GIS-based patrol management, secure QR checkpoints, incident mapping, and resident reporting — all in one place.",
     "ctaSignIn": "Sign in",
     "ctaSignup": "Create account",
@@ -355,6 +403,7 @@
     "contactTitle": "Contact us",
     "contactDesc": "E-Tanod is developed as an academic capstone research system. For questions or feedback:",
     "contactCta": "Send an email",
-    "footerTag": "Barangay Security · Real-time patrol & incident management"
+    "footerTag": "Barangay Security · Real-time patrol & incident management",
+    "demoHint": "You can sign in with the demo accounts shown on the sign-in page."
   }
 }

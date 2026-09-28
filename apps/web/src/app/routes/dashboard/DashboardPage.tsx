@@ -25,6 +25,7 @@ export function DashboardPage() {
   const admin = isAdmin(user?.primaryRole);
   const field = isField(user?.primaryRole);
   const isTanod = user?.primaryRole === 'TANOD';
+  const isResident = user?.primaryRole === 'RESIDENT';
   const role = roleMeta(user?.primaryRole);
 
   const quickActions = isTanod
@@ -33,10 +34,15 @@ export function DashboardPage() {
         { labelKey: 'dashboard.qa.scan', icon: QrCode, to: '/scan', tint: 'bg-brand-50 text-brand-700' },
         { labelKey: 'dashboard.qa.incidents', icon: Siren, to: '/incidents', tint: 'bg-rose-50 text-rose-700' },
       ]
-    : [
-        { labelKey: 'dashboard.qa.report', icon: Plus, to: '/incidents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
-        { labelKey: 'dashboard.qa.track', icon: Siren, to: '/incidents', tint: 'bg-brand-50 text-brand-700' },
-      ];
+    : isResident
+      ? [
+          { labelKey: 'dashboard.qa.report', icon: Plus, to: '/residents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
+          { labelKey: 'dashboard.qa.track', icon: Siren, to: '/residents', tint: 'bg-brand-50 text-brand-700' },
+        ]
+      : [
+          { labelKey: 'dashboard.qa.report', icon: Plus, to: '/incidents', state: { openReport: true }, tint: 'bg-rose-50 text-rose-700' },
+          { labelKey: 'dashboard.qa.track', icon: Siren, to: '/incidents', tint: 'bg-brand-50 text-brand-700' },
+        ];
 
   const { data, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ['dashboard'],
@@ -51,7 +57,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-5 text-sand-50 shadow-panel sm:p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-brand-950 p-5 text-white shadow-panel sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
@@ -77,7 +83,7 @@ export function DashboardPage() {
                   <QrCode className="h-4 w-4" /> {t('dashboard.scan')}
                 </Button>
               ) : null}
-              <Button variant="light" onClick={() => navigate('/incidents', { state: { openReport: true } })}>
+              <Button variant="light" onClick={() => navigate(isResident ? '/residents' : '/incidents', { state: { openReport: true } })}>
                 <Plus className="h-4 w-4" /> {t('dashboard.report')}
               </Button>
             </div>

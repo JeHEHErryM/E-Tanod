@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShieldHalf,
+  CalendarDays,
   QrCode,
   MapPin,
   Map as MapIcon,
@@ -23,6 +24,7 @@ import { isAdmin, roleMeta } from '@/app/roles';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { useIsMobile } from '@/app/lib/useIsMobile';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
+import { ThemeToggle } from '@/app/components/ThemeToggle';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 
 interface NavItem {
@@ -36,6 +38,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard, roles: 'all', end: true },
   { to: '/patrol', labelKey: 'nav.patrol', icon: ShieldHalf, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/schedules', labelKey: 'nav.schedules', icon: CalendarDays, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/scan', labelKey: 'nav.scan', icon: QrCode, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
   { to: '/checkpoints', labelKey: 'nav.checkpoints', icon: MapPin, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/gis', labelKey: 'nav.gis', icon: MapIcon, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
@@ -124,7 +127,7 @@ export function AppLayout() {
         <div className="pointer-events-none fixed inset-0 z-40 md:hidden">
           {drawerOpen ? (
             <div
-              className="pointer-events-auto fixed inset-0 bg-ink-950/40"
+              className="pointer-events-auto fixed inset-0 bg-ink-950/40 dark:bg-black/50"
               onClick={() => setDrawerOpen(false)}
             />
           ) : null}
@@ -181,6 +184,7 @@ export function AppLayout() {
               {t(`roleShort.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
             </span>
             <LanguageToggle />
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800"

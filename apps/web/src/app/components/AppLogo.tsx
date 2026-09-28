@@ -40,7 +40,7 @@ export function BrandWordmark({
       {showText ? (
         <span
           className={`font-display text-lg font-black tracking-tight ${
-            light ? 'text-sand-50' : 'text-ink-900'
+            light ? 'text-white' : 'text-ink-900'
           }`}
         >
           E-Tanod

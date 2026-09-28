@@ -8,6 +8,7 @@ import { Button, Input, PasswordInput, Spinner } from '@e-tanod/ui';
 import { AppLogo } from '@/app/components/AppLogo';
 import type { RoleName } from '@e-tanod/types';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
+import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 const demoHints: { roleKey: RoleName; user: string; tint: string }[] = [
   { roleKey: 'BARANGAY_ADMIN', user: 'barangayadmin', tint: 'bg-amber-500' },
@@ -44,7 +45,7 @@ export function LoginPage() {
   return (
     <div className="grid min-h-full bg-sand-50 lg:grid-cols-2">
       {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 p-12 text-sand-50 lg:flex lg:flex-col lg:justify-between">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-800 via-brand-900 to-brand-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="relative z-10 flex items-start gap-8">
           <Link to="/landing" aria-label={t('login.backHome')} className="shrink-0 transition-opacity hover:opacity-90">
             <AppLogo size={128} light />
@@ -68,7 +69,7 @@ export function LoginPage() {
             <div key={f.labelKey} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
               <f.icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-200" />
               <div>
-                <div className="text-sm font-semibold text-sand-50">{t(`${f.labelKey}.label`)}</div>
+                <div className="text-sm font-semibold text-white">{t(`${f.labelKey}.label`)}</div>
                 <div className="text-xs text-brand-200/80">{t(`${f.labelKey}.sub`)}</div>
               </div>
             </div>
@@ -102,6 +103,7 @@ export function LoginPage() {
             <p className="mt-1.5 text-sm text-ink-500">{t('login.subtitle')}</p>
             <div className="mt-4 flex items-center gap-2 lg:hidden">
               <LanguageToggle />
+              <ThemeToggle />
             </div>
           </div>
 
@@ -175,13 +177,14 @@ export function LoginPage() {
               ))}
             </div>
             <p className="mt-3 border-t border-ink-100 pt-2.5 text-center text-xs text-ink-400">
-              {t('login.demoPassword')} <span className="font-mono font-semibold text-ink-600">DemoPass123!</span>
+              {t('login.demoPassword')} <span className="font-mono font-semibold text-ink-600">Demo123!</span>
             </p>
           </div>
         </div>
 
-        <div className="absolute right-4 top-4 hidden lg:block">
+        <div className="absolute right-4 top-4 flex items-center gap-2 hidden lg:flex">
           <LanguageToggle />
+          <ThemeToggle />
         </div>
       </div>
     </div>

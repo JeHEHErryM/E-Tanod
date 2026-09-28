@@ -19,38 +19,42 @@ export class UsersController {
     @Query('search') search?: string,
     @Query('barangayId') barangayId?: string,
     @Query('isActive') isActive?: string,
+    @CurrentUser() actor?: AuthUser,
   ) {
-    return this.users.findAll({
-      page: parseInt(page, 10) || 1,
-      pageSize: Math.min(parseInt(pageSize, 10) || 20, 100),
-      role,
-      search,
-      barangayId,
-      isActive: isActive === undefined ? undefined : isActive === 'true',
-    });
+    return this.users.findAll(
+      {
+        page: parseInt(page, 10) || 1,
+        pageSize: Math.min(parseInt(pageSize, 10) || 20, 100),
+        role,
+        search,
+        barangayId,
+        isActive: isActive === undefined ? undefined : isActive === 'true',
+      },
+      actor,
+    );
   }
 
   @Get(':id')
   @Permissions('users.read')
-  findOne(@Param('id') id: string) {
-    return this.users.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() actor?: AuthUser) {
+    return this.users.findOne(id, actor);
   }
 
   @Post()
   @Permissions('users.create')
   create(@Body() dto: CreateUserDto, @CurrentUser() actor: AuthUser) {
-    return this.users.create(dto, actor.id);
+    return this.users.create(dto, actor);
   }
 
   @Patch(':id')
   @Permissions('users.update')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto, @CurrentUser() actor: AuthUser) {
-    return this.users.update(id, dto, actor.id);
+    return this.users.update(id, dto, actor);
   }
 
   @Delete(':id')
   @Permissions('users.delete')
   remove(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
-    return this.users.remove(id, actor.id);
+    return this.users.remove(id, actor);
   }
 }

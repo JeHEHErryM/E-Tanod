@@ -47,11 +47,15 @@ export class IncidentService implements OnModuleInit {
       { code: 'SUSPICIOUS', name: 'Suspicious Activity', severity: 'LOW' },
     ] as const;
     for (const c of defaults) {
-      await this.prisma.incidentCategory.upsert({
-        where: { code: c.code },
-        update: {},
-        create: c,
-      });
+      try {
+        await this.prisma.incidentCategory.upsert({
+          where: { code: c.code },
+          update: {},
+          create: c,
+        });
+      } catch {
+        // DB may not be ready on cold boot; categories are also seeded by prisma/seed.
+      }
     }
   }
 
@@ -72,9 +76,13 @@ export class IncidentService implements OnModuleInit {
     barangayId?: string;
     status?: string;
     categoryId?: string;
-  }) {
+  }, actor: ReporterContext) {
     const where: Prisma.IncidentWhereInput = {};
-    if (query.barangayId) where.barangayId = query.barangayId;
+    // Tenant isolation: non-super-admin roles only see their own barangay.
+    if (actor.primaryRole !== 'SUPER_ADMIN') {
+      where.barangayId = actor.barangayId ?? '__none__';
+    }
+    if (query.barangayId && actor.primaryRole === 'SUPER_ADMIN') where.barangayId = query.barangayId;
     if (query.status) where.status = query.status as IncidentStatus;
     if (query.categoryId) where.categoryId = query.categoryId;
 
@@ -95,7 +103,7 @@ export class IncidentService implements OnModuleInit {
     ]);
 
     return {
-      data,
+      data: data.map((i) => (i.isAnonymous ? { ...i, createdBy: null } : i)),
       total,
       page: query.page,
       pageSize: query.pageSize,
@@ -103,7 +111,7 @@ export class IncidentService implements OnModuleInit {
     };
   }
 
-  async getOne(id: string) {
+  async getOne(id: string, actor: ReporterContext) {
     const incident = await this.prisma.incident.findUnique({
       where: { id },
       include: {
@@ -119,6 +127,18 @@ export class IncidentService implements OnModuleInit {
       },
     });
     if (!incident) throw new NotFoundException('Incident not found');
+
+    if (actor.primaryRole === 'RESIDENT') {
+      if (incident.createdById !== actor.id) {
+        throw new ForbiddenException('You can only view your own reports');
+      }
+    } else if (actor.primaryRole !== 'SUPER_ADMIN') {
+      if (incident.barangayId !== actor.barangayId) {
+        throw new ForbiddenException('Incident is outside your barangay');
+      }
+    }
+
+    if (incident.isAnonymous) incident.createdBy = null;
     return incident;
   }
 
@@ -190,6 +210,7 @@ export class IncidentService implements OnModuleInit {
         include: {
           category: { select: { id: true, name: true, code: true } },
           barangay: { select: { id: true, name: true } },
+          createdBy: { select: { id: true, fullName: true, username: true } },
           attachments: { select: { id: true, url: true, fileName: true } },
         },
         orderBy: { reportedAt: 'desc' },
@@ -200,7 +221,7 @@ export class IncidentService implements OnModuleInit {
     ]);
 
     return {
-      data,
+      data: data.map((i) => (i.isAnonymous ? { ...i, createdBy: null } : i)),
       total,
       page,
       pageSize,
@@ -216,10 +237,13 @@ export class IncidentService implements OnModuleInit {
     const incident = await this.prisma.incident.findUnique({ where: { id } });
     if (!incident) throw new NotFoundException('Incident not found');
 
-    const isOwner =
-      incident.createdById === actor.id ||
-      REPORTING_ROLES.includes(actor.primaryRole);
-    if (!isOwner) throw new ForbiddenException('You cannot attach files to this incident');
+    const isOwner = incident.createdById === actor.id;
+    const isStaff =
+      REPORTING_ROLES.includes(actor.primaryRole) &&
+      (actor.primaryRole === 'SUPER_ADMIN' || incident.barangayId === actor.barangayId);
+    if (!isOwner && !isStaff) {
+      throw new ForbiddenException('You cannot attach files to this incident');
+    }
 
     const existing = await this.prisma.incidentAttachment.count({
       where: { incidentId: id },
@@ -303,16 +327,19 @@ export class IncidentService implements OnModuleInit {
   async updateStatus(
     id: string,
     dto: UpdateIncidentStatusDto,
-    actorId: string,
+    actor: ReporterContext,
   ) {
     const incident = await this.prisma.incident.findUnique({ where: { id } });
     if (!incident) throw new NotFoundException('Incident not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && incident.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Incident is outside your barangay');
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (dto.status === 'VERIFIED') {
         await tx.incident.update({
           where: { id },
-          data: { status: dto.status, verifiedById: actorId, verifiedAt: new Date() },
+          data: { status: dto.status, verifiedById: actor.id, verifiedAt: new Date() },
         });
       } else {
         await tx.incident.update({ where: { id }, data: { status: dto.status } });
@@ -322,12 +349,12 @@ export class IncidentService implements OnModuleInit {
           incidentId: id,
           status: dto.status,
           note: dto.note,
-          changedByUserId: actorId,
+          changedByUserId: actor.id,
         },
       });
     });
 
-    await this.audit.log(actorId, 'INCIDENT_UPDATED', 'Incident', id, { status: dto.status });
+    await this.audit.log(actor.id, 'INCIDENT_UPDATED', 'Incident', id, { status: dto.status });
 
     // Notify the reporter of the status change when there is one.
     if (incident.createdById) {

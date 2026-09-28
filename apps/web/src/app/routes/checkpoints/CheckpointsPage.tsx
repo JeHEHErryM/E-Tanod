@@ -30,7 +30,11 @@ interface CheckpointRow {
   radiusMeters: number;
   status: 'ACTIVE' | 'INACTIVE';
   barangay: { id: string; name: string };
-  qrToken?: { token: string; validUntil?: string | null } | null;
+}
+
+interface QrToken {
+  token: string;
+  validUntil?: string | null;
 }
 
 interface CheckpointFormState {
@@ -65,6 +69,7 @@ export function CheckpointsPage() {
   const [editing, setEditing] = useState<CheckpointRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [qrs, setQrs] = useState<Record<string, QrToken>>({});
   const queryClient = useQueryClient();
 
   const barangays = useQuery<Barangay[]>({
@@ -91,6 +96,20 @@ export function CheckpointsPage() {
     queryClient.invalidateQueries({ queryKey: ['checkpoints'] });
   };
 
+  const loadQr = async (id: string) => {
+    try {
+      const res = await api.get<QrToken>(`/checkpoints/${id}/qr`);
+      setQrs((m) => ({ ...m, [id]: res.data }));
+    } catch (e) {
+      alert(getErrorMessage(e));
+    }
+  };
+
+  const openEdit = (c: CheckpointRow) => {
+    setEditing(c);
+    void loadQr(c.id);
+  };
+
   const copyToken = async (id: string, token: string) => {
     try {
       await navigator.clipboard.writeText(token);
@@ -102,8 +121,18 @@ export function CheckpointsPage() {
   };
 
   const regenerateQr = async (id: string) => {
-    await api.post(`/checkpoints/${id}/qr/regenerate`, {});
-    onChanged();
+    try {
+      await api.post(`/checkpoints/${id}/qr/regenerate`, {});
+      setQrs((m) => {
+        const next = { ...m };
+        delete next[id];
+        return next;
+      });
+      await loadQr(id);
+      onChanged();
+    } catch (e) {
+      alert(getErrorMessage(e));
+    }
   };
 
   const remove = async (id: string) => {
@@ -182,11 +211,21 @@ export function CheckpointsPage() {
                   </div>
                   <div className="mt-0.5 text-xs font-semibold text-ink-400">{c.code}</div>
                 </div>
-                {c.qrToken ? (
-                  <div className="shrink-0 rounded-xl border border-ink-100 bg-white p-1.5">
-                    <QRCodeSVG value={c.qrToken.token} size={72} />
+                {qrs[c.id] ? (
+                  <div className="shrink-0 rounded-xl border border-ink-100 bg-white p-1.5" style={{ backgroundColor: '#ffffff' }}>
+                    <QRCodeSVG value={qrs[c.id].token} size={72} />
                   </div>
-                ) : null}
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void loadQr(c.id)}
+                    className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-ink-300 text-ink-400 transition-colors hover:border-brand-400 hover:text-brand-600"
+                    title={t('checkpoints.showQr')}
+                  >
+                    <QrCode className="h-5 w-5" />
+                    <span className="text-[10px] font-bold">{t('checkpoints.showQr')}</span>
+                  </button>
+                )}
               </div>
 
               <div className="space-y-1 text-xs text-ink-500">
@@ -205,11 +244,11 @@ export function CheckpointsPage() {
               </div>
 
               <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-ink-100 pt-3">
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditing(c)}>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(c)}>
                   <Settings2 className="h-4 w-4" /> {t('checkpoints.edit')}
                 </Button>
-                {c.qrToken ? (
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => copyToken(c.id, c.qrToken!.token)}>
+                {qrs[c.id] ? (
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => copyToken(c.id, qrs[c.id].token)}>
                     {copiedId === c.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     {copiedId === c.id ? t('checkpoints.copied') : t('checkpoints.copyQr')}
                   </Button>
@@ -248,6 +287,7 @@ export function CheckpointsPage() {
           setEditing(null);
         }}
         checkpoint={editing}
+        qrToken={editing ? (qrs[editing.id] ?? null) : null}
         barangays={barangays.data ?? []}
         defaultBarangay={defaultBarangay}
         isSuperAdmin={isSuperAdmin}
@@ -261,6 +301,7 @@ function CheckpointSheet({
   open,
   onClose,
   checkpoint,
+  qrToken,
   barangays,
   defaultBarangay,
   isSuperAdmin,
@@ -269,6 +310,7 @@ function CheckpointSheet({
   open: boolean;
   onClose: () => void;
   checkpoint: CheckpointRow | null;
+  qrToken: QrToken | null;
   barangays: Barangay[];
   defaultBarangay: string;
   isSuperAdmin: boolean;
@@ -314,8 +356,7 @@ function CheckpointSheet({
         latitude: lat,
         longitude: lng,
         radiusMeters: form.radiusMeters,
-        barangayId: form.barangayId,
-        ...(editing ? { status: form.status } : {}),
+        ...(editing ? { status: form.status } : { barangayId: form.barangayId }),
       };
       if (editing && checkpoint) {
         await api.patch(`/checkpoints/${checkpoint.id}`, payload);
@@ -346,16 +387,16 @@ function CheckpointSheet({
       }
     >
       <div className="space-y-4">
-        {checkpoint?.qrToken ? (
+        {qrToken ? (
           <div className="flex items-center gap-4 rounded-2xl bg-sand-100 p-4">
-            <div className="rounded-xl border border-ink-100 bg-white p-2">
-              <QRCodeSVG value={checkpoint.qrToken.token} size={96} />
+            <div className="rounded-xl border border-ink-100 bg-white p-2" style={{ backgroundColor: '#ffffff' }}>
+              <QRCodeSVG value={qrToken.token} size={96} />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-bold text-ink-900">{t('checkpoints.qrLabel')}</div>
               <p className="text-xs text-ink-500">{t('checkpoints.qrHint')}</p>
               <code className="mt-1 block truncate rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-ink-600">
-                {checkpoint.qrToken.token}
+                {qrToken.token}
               </code>
             </div>
           </div>

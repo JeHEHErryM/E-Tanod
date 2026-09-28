@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Home,
@@ -53,6 +54,14 @@ export function ResidentsPage() {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [reportOpen, setReportOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if ((location.state as { openReport?: boolean } | null)?.openReport) {
+      setReportOpen(true);
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const categories = useQuery<IncidentCategory[]>({
     queryKey: ['incident-categories'],
@@ -189,6 +198,9 @@ function ReportSheet({
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  // Once the incident row is created, keep its id so a failed attachment
+  // upload never leads to a second (duplicate) incident on retry.
+  const createdIncident = useRef<string | null>(null);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -203,26 +215,26 @@ function ReportSheet({
           throw new Error(t('residents.coordsError'));
         }
       }
-      const incident = (
-        await api.post('/incidents', {
-          categoryId,
-          description,
-          latitude: lat,
-          longitude: lng,
-          isAnonymous: anonymous,
-        })
-      ).data;
+      const payload = { categoryId, description, latitude: lat, longitude: lng, isAnonymous: anonymous };
+
+      let incidentId = createdIncident.current;
+      if (!incidentId) {
+        const incident = (await api.post('/incidents', payload)).data;
+        incidentId = incident.id;
+        createdIncident.current = incident.id;
+      }
 
       if (photos.length > 0) {
         const form = new FormData();
         photos.forEach((p) => form.append('files', p));
-        await api.post(`/incidents/${incident.id}/attachments`, form, {
+        await api.post(`/incidents/${incidentId}/attachments`, form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
-      return incident;
+      return { id: incidentId };
     },
     onSuccess: () => {
+      createdIncident.current = null;
       onClose();
       setDescription('');
       setCoords('');
@@ -336,7 +348,7 @@ function ReportSheet({
                 <button
                   type="button"
                   onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink-900/70 text-white"
+                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink-900/70 text-white dark:bg-black/60"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

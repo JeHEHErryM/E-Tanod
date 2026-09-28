@@ -15,7 +15,7 @@ export function LanguageToggle({ light = false }: { light?: boolean }) {
       aria-label={current === 'en' ? 'Switch to Tagalog' : 'Lumipat sa Ingles'}
       className={`flex h-10 items-center gap-1.5 rounded-xl border px-2.5 text-xs font-bold tracking-wide transition-colors ${
         light
-          ? 'border-white/25 bg-white/10 text-sand-50 hover:bg-white/20'
+          ? 'border-white/25 bg-white/10 text-white hover:bg-white/20'
           : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
       }`}
     >

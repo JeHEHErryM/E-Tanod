@@ -15,7 +15,7 @@ export default defineConfig({
         description:
           'GIS-based patrol management and incident mapping for barangay security.',
         theme_color: '#0f3b36',
-        background_color: '#f6f4ef',
+        background_color: '#0e2b2c',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         </p>
         <button
           onClick={this.reload}
-          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-brand-700 px-6 text-sm font-bold text-sand-50 transition-colors hover:bg-brand-800"
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-brand-700 px-6 text-sm font-bold text-white transition-colors hover:bg-brand-800"
         >
           {i18n.t('error.reload')}
         </button>

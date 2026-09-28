@@ -12,7 +12,17 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
-  app.use(helmet());
+  // Requests arrive behind Railway's proxy; trust the first hop so that
+  // IP-based rate limiting (ThrottlerBehindProxyGuard) reads real clients.
+  app.set('trust proxy', 1);
+
+  app.use(helmet({
+    // Incident photos served from /uploads/<barangay>/<file> are rendered in
+    // <img> tags from the same origin, but Mapbox/static assets and dev
+    // origins must stay unblocked. COOP/COEP left disabled to keep photos and
+    // third-party tiles loading while CSP stays locked down.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }));
 
   const uploadDir = config.get<string>('UPLOAD_DIR', join(process.cwd(), 'uploads'));
   app.useStaticAssets(uploadDir, { prefix: '/uploads' });

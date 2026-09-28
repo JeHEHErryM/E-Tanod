@@ -43,6 +43,14 @@ interface GisIncident {
 
 const STATUS_FILTERS = ['', 'PENDING', 'VERIFIED', 'RESOLVED', 'REJECTED'];
 
+const esc = (v: string | number) =>
+  String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
+
+const MAP_STYLES = {
+  light: 'mapbox://styles/mapbox/light-v11',
+  dark: 'mapbox://styles/mapbox/dark-v11',
+};
+
 interface GeoFeature {
   type: 'Feature';
   properties: Record<string, string | number>;
@@ -57,6 +65,24 @@ export function GisPage() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
+  );
+
+  // Keep the basemap in sync with the app theme (dark class on <html>)
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    map.setStyle(isDark ? MAP_STYLES.dark : MAP_STYLES.light);
+  }, [isDark, mapReady]);
 
   const barangayId = me?.primaryRole === 'SUPER_ADMIN' ? undefined : (me?.barangayId ?? undefined) || undefined;
 
@@ -109,7 +135,7 @@ const sources = useMemo(() => {
     mapboxgl.accessToken = MAPBOX_TOKEN;
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: isDark ? MAP_STYLES.dark : MAP_STYLES.light,
       center: [120.596, 13.2231],
       zoom: 12,
     });
@@ -196,10 +222,10 @@ const sources = useMemo(() => {
         .setLngLat({ lng: feature.geometry.coordinates[0], lat: feature.geometry.coordinates[1] })
         .setHTML(
           `<div style="font-family:inherit">
-             <div style="font-weight:700;color:#0f172a">${String(p.category)}</div>
-             <div style="font-size:11px;color:#64748b;margin:2px 0 6px">${String(p.code)} · ${String(p.barangay)}</div>
-             <div style="font-size:12px;color:#334155">Status: <b>${String(p.status)}</b></div>
-             <div style="font-size:11px;color:#94a3b8;margin-top:3px">${String(p.reportedAt)}</div>
+             <div style="font-weight:700;color:#0f172a">${esc(p.category)}</div>
+             <div style="font-size:11px;color:#475569;margin:2px 0 6px">${esc(p.code)} · ${esc(p.barangay)}</div>
+             <div style="font-size:12px;color:#334155">Status: <b>${esc(p.status)}</b></div>
+             <div style="font-size:11px;color:#64748b;margin-top:3px">${esc(p.reportedAt)}</div>
            </div>`,
         )
         .addTo(map);
@@ -242,7 +268,7 @@ const sources = useMemo(() => {
             setStatus('');
           }}
           className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors ${
-            showHeat ? 'bg-brand-700 text-sand-50' : 'bg-white text-ink-600 border border-ink-200 hover:border-brand-300'
+            showHeat ? 'bg-brand-700 text-white' : 'bg-white text-ink-600 border border-ink-200 hover:border-brand-300'
           }`}
         >
           <Thermometer className="h-4 w-4" /> {t('gis.showHeatmap')}
@@ -253,7 +279,7 @@ const sources = useMemo(() => {
             key={s}
             onClick={() => setStatus(s)}
             className={`inline-flex h-9 items-center rounded-full px-3.5 text-xs font-bold transition-colors ${
-              status === s ? 'bg-ink-900 text-white' : 'bg-white text-ink-500 border border-ink-200 hover:border-ink-400'
+              status === s ? 'bg-ink-900 text-white dark:bg-white/20 dark:text-white' : 'bg-white text-ink-500 border border-ink-200 hover:border-ink-400'
             }`}
           >
             {s === '' ? t('gis.all') : t(`status.${s}`)}
@@ -281,7 +307,7 @@ const sources = useMemo(() => {
             </div>
           ) : null}
         </div>
-        <div className="pointer-events-none absolute bottom-3 left-3 rounded-xl bg-ink-900/85 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur">
+        <div className="pointer-events-none absolute bottom-3 left-3 rounded-xl bg-ink-900/85 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur dark:bg-black/70">
           {t('gis.count', { count: incidents.data?.data.length ?? 0 })}
         </div>
       </div>

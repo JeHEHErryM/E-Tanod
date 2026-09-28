@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
+import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 const CONTACT_EMAIL = 'hello@example.com';
 
@@ -36,6 +37,7 @@ export function LandingPage() {
           <BrandWordmark size={40} />
           <div className="flex items-center gap-2">
             <LanguageToggle />
+            <ThemeToggle />
             <button
               onClick={() => navigate('/signup')}
               className="hidden h-10 items-center justify-center rounded-xl px-3.5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-50 sm:inline-flex"
@@ -44,7 +46,7 @@ export function LandingPage() {
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-brand-700 px-4 text-sm font-bold text-sand-50 transition-colors hover:bg-brand-800"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-brand-700 px-4 text-sm font-bold text-white transition-colors hover:bg-brand-800"
             >
               {t('landing.ctaSignIn')}
             </button>
@@ -74,7 +76,7 @@ function Hero({ onFeatures }: { onFeatures: () => void }) {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-ink-950 px-6 py-16 text-sand-50 shadow-panel sm:px-10 sm:py-20">
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-brand-950 px-6 py-16 text-white shadow-panel sm:px-10 sm:py-20">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-500/25 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 -left-12 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
       <div className="relative z-10 max-w-2xl">
@@ -97,7 +99,7 @@ function Hero({ onFeatures }: { onFeatures: () => void }) {
           </button>
           <button
             onClick={onFeatures}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 text-sm font-bold text-sand-50 transition-colors hover:bg-white/20"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 text-sm font-bold text-white transition-colors hover:bg-white/20"
           >
             {t('landing.ctaFeatures')}
             <ArrowDown className="h-4 w-4" />
@@ -180,7 +182,7 @@ function ContactSection() {
   return (
     <section className="scroll-mt-20 pb-20">
       <div className="flex flex-col items-center rounded-3xl bg-brand-50 px-6 py-12 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-700 text-sand-50">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-700 text-white">
           <Mail className="h-6 w-6" />
         </span>
         <h2 className="mt-4 font-display text-2xl font-black tracking-tight text-ink-900">
@@ -189,7 +191,7 @@ function ContactSection() {
         <p className="mt-2 max-w-md text-sm text-ink-600">{t('landing.contactDesc')}</p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand-700 px-6 text-sm font-bold text-sand-50 transition-colors hover:bg-brand-800"
+          className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand-700 px-6 text-sm font-bold text-white transition-colors hover:bg-brand-800"
         >
           <Mail className="h-4 w-4" />
           {t('landing.contactCta')}

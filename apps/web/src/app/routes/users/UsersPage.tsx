@@ -35,6 +35,8 @@ export function UsersPage() {
   const { t, i18n } = useTranslation();
   const me = useAuthStore((s) => s.user);
   const canGrantSuperAdmin = me?.primaryRole === 'SUPER_ADMIN';
+  const ownBarangayId = me?.barangayId ?? '';
+  const isBarangayAdmin = me?.primaryRole === 'BARANGAY_ADMIN';
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [managing, setManaging] = useState<UserRow | null>(null);
@@ -73,7 +75,7 @@ export function UsersPage() {
         description={t('users.desc')}
         icon={<Users className="h-5 w-5" />}
         actions={
-          canGrantSuperAdmin ? (
+          canGrantSuperAdmin || isBarangayAdmin ? (
             <Button onClick={() => setCreateOpen(true)}>
               <UserPlus className="h-4 w-4" /> {t('users.add')}
             </Button>
@@ -146,17 +148,19 @@ export function UsersPage() {
                     >
                       <Check className="h-4 w-4" /> {t('users.approve')}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 sm:flex-none"
-                      onClick={() => {
-                        const res = api.delete(`/users/${u.id}`).then(() => onChanged());
-                        res.catch(() => {});
-                      }}
-                    >
-                      <X className="h-4 w-4" /> {t('users.reject')}
-                    </Button>
+                    {canGrantSuperAdmin ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 sm:flex-none"
+                        onClick={() => {
+                          const res = api.delete(`/users/${u.id}`).then(() => onChanged());
+                          res.catch(() => {});
+                        }}
+                      >
+                        <X className="h-4 w-4" /> {t('users.reject')}
+                      </Button>
+                    ) : null}
                   </div>
                 </li>
               );
@@ -228,6 +232,8 @@ export function UsersPage() {
         onClose={() => setCreateOpen(false)}
         barangays={barangays.data ?? []}
         onCreated={onChanged}
+        canGrantSuperAdmin={canGrantSuperAdmin}
+        ownBarangayId={ownBarangayId}
       />
 
       <ManageUserSheet
@@ -236,6 +242,7 @@ export function UsersPage() {
         onClose={() => setManaging(null)}
         barangays={barangays.data ?? []}
         canGrantSuperAdmin={canGrantSuperAdmin}
+        ownBarangayId={ownBarangayId}
         onChanged={onChanged}
       />
     </div>
@@ -247,26 +254,40 @@ function CreateUserSheet({
   onClose,
   barangays,
   onCreated,
+  canGrantSuperAdmin,
+  ownBarangayId,
 }: {
   open: boolean;
   onClose: () => void;
   barangays: Barangay[];
   onCreated: () => void;
+  canGrantSuperAdmin: boolean;
+  ownBarangayId: string;
 }) {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<RoleName>('TANOD');
-  const [barangayId, setBarangayId] = useState('');
+  const [barangayId, setBarangayId] = useState(ownBarangayId);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const lockedBarangay = !canGrantSuperAdmin && !!ownBarangayId;
 
   const submit = async () => {
     setError('');
     setLoading(true);
     try {
-      await api.post('/users', { username, password, fullName, primaryRole: role, roles: [role], barangayId: barangayId || undefined });
+      const effectiveRole = !canGrantSuperAdmin && role === 'SUPER_ADMIN' ? 'TANOD' : role;
+      await api.post('/users', {
+        username,
+        password,
+        fullName,
+        primaryRole: effectiveRole,
+        roles: [effectiveRole],
+        barangayId: lockedBarangay ? ownBarangayId : (barangayId || undefined),
+      });
       setUsername('');
       setFullName('');
       setPassword('');
@@ -301,9 +322,14 @@ function CreateUserSheet({
           <option value="TANOD">{t('role.TANOD')}</option>
           <option value="BARANGAY_ADMIN">{t('role.BARANGAY_ADMIN')}</option>
           <option value="RESIDENT">{t('role.RESIDENT')}</option>
-          <option value="SUPER_ADMIN">{t('role.SUPER_ADMIN')}</option>
+          {canGrantSuperAdmin ? <option value="SUPER_ADMIN">{t('role.SUPER_ADMIN')}</option> : null}
         </Select>
-        <Select label={t('users.barangayLabel')} value={barangayId} onChange={(e) => setBarangayId(e.target.value)}>
+        <Select
+          label={t('users.barangayLabel')}
+          value={lockedBarangay ? ownBarangayId : barangayId}
+          onChange={(e) => setBarangayId(e.target.value)}
+          disabled={lockedBarangay}
+        >
           <option value="">{t('users.noBarangay')}</option>
           {barangays.map((b) => (
             <option key={b.id} value={b.id}>
@@ -324,17 +350,20 @@ function ManageUserSheet({
   onClose,
   barangays,
   canGrantSuperAdmin,
+  ownBarangayId,
   onChanged,
 }: {
   user: UserRow | null;
   onClose: () => void;
   barangays: Barangay[];
   canGrantSuperAdmin: boolean;
+  ownBarangayId: string;
   onChanged: () => void;
 }) {
   const { t } = useTranslation();
+  const isSuperAdmin = canGrantSuperAdmin;
   const [role, setRole] = useState<RoleName>(user?.primaryRole ?? 'RESIDENT');
-  const [barangayId, setBarangayId] = useState(user?.barangay?.id ?? '');
+  const [barangayId, setBarangayId] = useState(user?.barangay?.id ?? ownBarangayId);
   const [isActive, setIsActive] = useState(user?.isActive ?? true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -347,7 +376,7 @@ function ManageUserSheet({
       await api.patch(`/users/${user.id}`, {
         primaryRole: role,
         roles: [role],
-        barangayId: barangayId || undefined,
+        barangayId: isSuperAdmin ? (barangayId || undefined) : undefined,
         isActive,
       });
       onClose();
@@ -379,18 +408,20 @@ function ManageUserSheet({
           </div>
           <Select label={t('users.primaryRole')} value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
             <option value="TANOD">{t('role.TANOD')}</option>
-            <option value="BARANGAY_ADMIN">{t('role.BARANGAY_ADMIN')}</option>
             <option value="RESIDENT">{t('role.RESIDENT')}</option>
-            {canGrantSuperAdmin ? <option value="SUPER_ADMIN">{t('role.SUPER_ADMIN')}</option> : null}
+            {isSuperAdmin ? <option value="BARANGAY_ADMIN">{t('role.BARANGAY_ADMIN')}</option> : null}
+            {isSuperAdmin ? <option value="SUPER_ADMIN">{t('role.SUPER_ADMIN')}</option> : null}
           </Select>
-          <Select label={t('users.barangayLabel')} value={barangayId} onChange={(e) => setBarangayId(e.target.value)}>
-            <option value="">{t('users.noBarangay')}</option>
-            {barangays.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </Select>
+          {isSuperAdmin ? (
+            <Select label={t('users.barangayLabel')} value={barangayId} onChange={(e) => setBarangayId(e.target.value)}>
+              <option value="">{t('users.noBarangay')}</option>
+              {barangays.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          ) : null}
           <div className="flex items-center justify-between rounded-2xl border border-ink-200 p-4">
             <div>
               <div className="text-sm font-bold text-ink-900">{t('users.accountStatus')}</div>

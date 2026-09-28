@@ -19,6 +19,7 @@ import { Button, Input, PasswordInput, Select, Spinner } from '@e-tanod/ui';
 import type { Barangay, RoleName } from '@e-tanod/types';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
+import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 const ROLE_OPTIONS: { key: RoleName; icon: LucideIcon; titleKey: string; descKey: string }[] = [
   { key: 'RESIDENT', icon: Users, titleKey: 'signup.roleResidentTitle', descKey: 'signup.roleResidentDesc' },
@@ -78,6 +79,7 @@ export function SignupPage() {
           <header className="mb-8 flex items-center justify-between">
             <BrandWordmark size={36} />
             <LanguageToggle />
+            <ThemeToggle />
           </header>
           <div className="rounded-3xl border border-ink-100 bg-white p-8 text-center shadow-panel">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
@@ -109,6 +111,7 @@ export function SignupPage() {
             <BrandWordmark size={36} />
           </Link>
           <LanguageToggle />
+          <ThemeToggle />
         </header>
 
         <div className="rounded-3xl border border-ink-100 bg-white p-6 shadow-panel sm:p-8">

@@ -36,7 +36,7 @@ export function Sheet({ open, onClose, title, children, footer, size = 'md' }: S
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-ink-950/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-ink-950/50 dark:bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden="true"
       />

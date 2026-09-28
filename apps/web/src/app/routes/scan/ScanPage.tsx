@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { QrCode, MapPin, CheckCircle2, XCircle, Crosshair, ScanLine } from 'lucide-react';
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
+import { QrCode, MapPin, CheckCircle2, XCircle, Crosshair, ScanLine, Camera, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
@@ -38,6 +39,8 @@ export function ScanPage() {
   const [lastResult, setLastResult] = useState<ScanResponse | null>(null);
   const [hasLocation, setHasLocation] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const scannedRef = useRef(false);
 
   const active = useQuery<ActiveSession | null>({
     queryKey: ['active-session'],
@@ -164,6 +167,42 @@ export function ScanPage() {
           </div>
 
           <div className="mt-5 space-y-3">
+            {cameraOpen ? (
+              <CameraScanner
+                onDetected={(value) => {
+                  if (scannedRef.current) return;
+                  scannedRef.current = true;
+                  setToken(value);
+                  setCameraOpen(false);
+                  setTimeout(() => {
+                    scannedRef.current = false;
+                    if (value.trim()) scan.mutate();
+                  }, 200);
+                }}
+                onClose={() => {
+                  setCameraOpen(false);
+                  scannedRef.current = false;
+                }}
+              />
+            ) : (
+              <Button
+                fullWidth
+                variant="outline"
+                onClick={() => {
+                  scannedRef.current = false;
+                  setCameraOpen(true);
+                }}
+              >
+                <Camera className="h-5 w-5" /> {t('scan.cameraOpen')}
+              </Button>
+            )}
+
+            <div className="relative flex items-center gap-3 py-1">
+              <span className="h-px flex-1 bg-ink-200" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400">{t('scan.or')}</span>
+              <span className="h-px flex-1 bg-ink-200" />
+            </div>
+
             <Input
               label={t('scan.qrToken')}
               value={token}
@@ -220,6 +259,84 @@ export function ScanPage() {
             </div>
           </div>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CameraScanner({
+  onDetected,
+  onClose,
+}: {
+  onDetected: (token: string) => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const onDetectedRef = useRef(onDetected);
+  onDetectedRef.current = onDetected;
+
+  useEffect(() => {
+    const reader = new BrowserMultiFormatReader();
+    let stream: MediaStream | null = null;
+    let controls: IScannerControls | null = null;
+    let disposed = false;
+
+    const stop = () => {
+      controls?.stop();
+      controls = null;
+      stream?.getTracks().forEach((track) => track.stop());
+      stream = null;
+    };
+
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        if (disposed) {
+          stop();
+          return;
+        }
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        controls = await reader.decodeFromVideoDevice(undefined, videoRef.current!, (result) => {
+          if (result) onDetectedRef.current(result.getText());
+        });
+      } catch {
+        if (!disposed) setError(t('scan.cameraDenied'));
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      stop();
+    };
+  }, [t]);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-ink-200 bg-ink-950 dark:bg-black">
+      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3.5 py-2.5">
+        <span className="flex items-center gap-2 text-sm font-bold text-white">
+          <Camera className="h-4 w-4 text-emerald-300" />
+          {t('scan.cameraTitle')}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-100 transition-colors hover:bg-white/10"
+          aria-label={t('scan.cameraClose')}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="relative">
+        <video ref={videoRef} muted playsInline className="aspect-video w-full object-cover" />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-36 w-36 rounded-2xl border-2 border-emerald-400/80 shadow-[0_0_0_9999px_rgba(2,6,23,0.35)]" />
+        </div>
+        {error ? <p className="bg-rose-950/95 px-4 py-3 text-sm font-medium text-rose-100">{error}</p> : null}
       </div>
     </div>
   );

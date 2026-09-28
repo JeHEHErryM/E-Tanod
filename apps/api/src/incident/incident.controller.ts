@@ -28,14 +28,17 @@ export class IncidentController {
 
   @Get()
   @Permissions('incident.read', 'incident.review')
-  list(@Query() query: ListIncidentQueryDto) {
-    return this.incidents.list({
-      page: query.page,
-      pageSize: query.pageSize,
-      barangayId: query.barangayId,
-      status: query.status,
-      categoryId: query.categoryId,
-    });
+  list(@Query() query: ListIncidentQueryDto, @CurrentUser() actor: AuthUser) {
+    return this.incidents.list(
+      {
+        page: query.page,
+        pageSize: query.pageSize,
+        barangayId: query.barangayId,
+        status: query.status,
+        categoryId: query.categoryId,
+      },
+      actor,
+    );
   }
 
   @Get('mine')
@@ -46,8 +49,8 @@ export class IncidentController {
 
   @Get(':id')
   @Permissions('incident.read', 'incident.review', 'resident.track')
-  getOne(@Param('id') id: string) {
-    return this.incidents.getOne(id);
+  getOne(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
+    return this.incidents.getOne(id, actor);
   }
 
   @Post()
@@ -88,6 +91,6 @@ export class IncidentController {
     @Body() dto: UpdateIncidentStatusDto,
     @CurrentUser() actor: AuthUser,
   ) {
-    return this.incidents.updateStatus(id, dto, actor.id);
+    return this.incidents.updateStatus(id, dto, actor);
   }
 }

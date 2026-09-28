@@ -1,18 +1,23 @@
 import {
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { Prisma, ScanResult } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SocketService } from '../socket/socket.service';
 import { AuditService } from '../audit/audit.service';
-import { isWithinRadius, haversineMeters } from '../common/geo.util';
+import { AuthUser } from '../auth/auth-user.interface';
+import { haversineMeters } from '../common/geo.util';
 import {
   CreateCheckpointDto,
   UpdateCheckpointDto,
   ScanCheckpointDto,
 } from './dto/checkpoint.dto';
+
+const QR_TOKEN_TTL_DAYS = 30;
+const MAX_GPS_ACCURACY_METERS = 200;
 
 @Injectable()
 export class CheckpointService {
@@ -26,9 +31,17 @@ export class CheckpointService {
     return `qr_${randomBytes(16).toString('hex')}`;
   }
 
-  async list(query: { page: number; pageSize: number; barangayId?: string; status?: string }) {
+  private qrExpiry(): Date {
+    return new Date(Date.now() + QR_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
+  }
+
+  async list(query: { page: number; pageSize: number; barangayId?: string; status?: string }, actor: AuthUser) {
     const where: Prisma.CheckpointWhereInput = {};
-    if (query.barangayId) where.barangayId = query.barangayId;
+    if (actor.primaryRole !== 'SUPER_ADMIN') {
+      where.barangayId = actor.barangayId ?? '__none__';
+    } else if (query.barangayId) {
+      where.barangayId = query.barangayId;
+    }
     if (query.status) where.status = query.status as never;
 
     const [data, total] = await this.prisma.$transaction([
@@ -36,7 +49,6 @@ export class CheckpointService {
         where,
         include: {
           barangay: { select: { id: true, name: true } },
-          qrToken: { select: { token: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.pageSize,
@@ -54,19 +66,40 @@ export class CheckpointService {
     };
   }
 
-  async getOne(id: string) {
+  async getOne(id: string, actor: AuthUser) {
     const checkpoint = await this.prisma.checkpoint.findUnique({
       where: { id },
-      include: {
-        barangay: { select: { id: true, name: true } },
-        qrToken: { select: { token: true, validUntil: true } },
-      },
+      include: { barangay: { select: { id: true, name: true } } },
     });
     if (!checkpoint) throw new NotFoundException('Checkpoint not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && checkpoint.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Checkpoint is outside your barangay');
+    }
     return checkpoint;
   }
 
-  async create(dto: CreateCheckpointDto, actorId: string) {
+  /** Admin-only accessor for the QR token (never exposed through list/getOne). */
+  async getQr(id: string, actor: AuthUser) {
+    const checkpoint = await this.prisma.checkpoint.findUnique({
+      where: { id },
+      include: { qrToken: { select: { token: true, validUntil: true } } },
+    });
+    if (!checkpoint) throw new NotFoundException('Checkpoint not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && checkpoint.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Checkpoint is outside your barangay');
+    }
+    return checkpoint.qrToken;
+  }
+
+  async create(dto: CreateCheckpointDto, actor: AuthUser) {
+    if (actor.primaryRole !== 'SUPER_ADMIN') {
+      if (dto.barangayId && dto.barangayId !== actor.barangayId) {
+        throw new ForbiddenException('Cannot create checkpoints outside your barangay');
+      }
+      if (!actor.barangayId) {
+        throw new ForbiddenException('Your account is not assigned to a barangay');
+      }
+    }
     const checkpoint = await this.prisma.checkpoint.create({
       data: {
         code: dto.code,
@@ -75,50 +108,59 @@ export class CheckpointService {
         latitude: dto.latitude,
         longitude: dto.longitude,
         radiusMeters: dto.radiusMeters ?? 50,
-        barangayId: dto.barangayId,
-        createdById: actorId,
-        qrToken: { create: { token: this.generateQrToken() } },
+        barangayId: dto.barangayId ?? actor.barangayId ?? null,
+        createdById: actor.id,
+        qrToken: { create: { token: this.generateQrToken(), validUntil: this.qrExpiry() } },
       },
-      include: { barangay: { select: { id: true, name: true } }, qrToken: true },
+      include: { barangay: { select: { id: true, name: true } } },
     });
 
-    await this.audit.log(actorId, 'CHECKPOINT_CREATED', 'Checkpoint', checkpoint.id);
+    await this.audit.log(actor.id, 'CHECKPOINT_CREATED', 'Checkpoint', checkpoint.id);
     return checkpoint;
   }
 
-  async update(id: string, dto: UpdateCheckpointDto, actorId: string) {
+  async update(id: string, dto: UpdateCheckpointDto, actor: AuthUser) {
     const existing = await this.prisma.checkpoint.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Checkpoint not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && existing.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Checkpoint is outside your barangay');
+    }
 
     const checkpoint = await this.prisma.checkpoint.update({
       where: { id },
       data: dto,
-      include: { barangay: { select: { id: true, name: true } }, qrToken: true },
+      include: { barangay: { select: { id: true, name: true } } },
     });
 
-    await this.audit.log(actorId, 'CHECKPOINT_UPDATED', 'Checkpoint', id);
+    await this.audit.log(actor.id, 'CHECKPOINT_UPDATED', 'Checkpoint', id);
     return checkpoint;
   }
 
-  async remove(id: string, actorId: string) {
+  async remove(id: string, actor: AuthUser) {
     const existing = await this.prisma.checkpoint.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Checkpoint not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && existing.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Checkpoint is outside your barangay');
+    }
 
     await this.prisma.checkpoint.delete({ where: { id } });
-    await this.audit.log(actorId, 'CHECKPOINT_DELETED', 'Checkpoint', id);
+    await this.audit.log(actor.id, 'CHECKPOINT_DELETED', 'Checkpoint', id);
     return { success: true };
   }
 
-  async regenerateQr(id: string, actorId: string) {
+  async regenerateQr(id: string, actor: AuthUser) {
     const existing = await this.prisma.checkpoint.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Checkpoint not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && existing.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Checkpoint is outside your barangay');
+    }
 
     const qrToken = await this.prisma.checkpointQRToken.update({
       where: { checkpointId: id },
-      data: { token: this.generateQrToken(), validFrom: new Date() },
+      data: { token: this.generateQrToken(), validFrom: new Date(), validUntil: this.qrExpiry() },
     });
 
-    await this.audit.log(actorId, 'QR_REGENERATED', 'Checkpoint', id);
+    await this.audit.log(actor.id, 'QR_REGENERATED', 'Checkpoint', id);
     this.socket.emitPublic('checkpoint.qr.regenerated', { checkpointId: id });
     return qrToken;
   }
@@ -135,7 +177,7 @@ export class CheckpointService {
       include: { checkpoint: true },
     });
     if (!qr || (qr.validUntil && qr.validUntil < new Date())) {
-      return this.recordScan(null, null, null, tanodId, ScanResult.INVALID, null, null, null, 'Invalid or expired QR token');
+      return this.recordScan(null, null, null, tanodId, ScanResult.INVALID, null, null, null, null, 'Invalid or expired QR token');
     }
 
     if (qr.checkpoint.status !== 'ACTIVE') {
@@ -148,6 +190,7 @@ export class CheckpointService {
         dto.latitude ?? null,
         dto.longitude ?? null,
         dto.accuracy ?? null,
+        null,
         'Checkpoint is inactive',
       );
     }
@@ -172,6 +215,7 @@ export class CheckpointService {
         dto.latitude ?? null,
         dto.longitude ?? null,
         dto.accuracy ?? null,
+        null,
         'No active patrol session',
       );
     }
@@ -189,6 +233,7 @@ export class CheckpointService {
         dto.latitude ?? null,
         dto.longitude ?? null,
         dto.accuracy ?? null,
+        null,
         'Checkpoint is not part of the scheduled patrol',
       );
     }
@@ -203,23 +248,41 @@ export class CheckpointService {
         null,
         null,
         dto.accuracy ?? null,
+        null,
         'Device location unavailable',
       );
     }
 
-    const distanceMeters = !isWithinRadius(
+    // GPS accuracy guard: a position that is too imprecise must not count
+    // as a verified visit to the checkpoint (docs §8 "accuracy thresholds").
+    const accuracy = dto.accuracy ?? 0;
+    if (accuracy > MAX_GPS_ACCURACY_METERS) {
+      return this.recordScan(
+        qr.checkpointId,
+        qr.checkpoint,
+        activeSession.id,
+        tanodId,
+        ScanResult.OUTSIDE_RADIUS,
+        dto.latitude,
+        dto.longitude,
+        accuracy,
+        null,
+        `GPS accuracy too low (${Math.round(accuracy)}m)`,
+      );
+    }
+
+    const distance = haversineMeters(
       { latitude: qr.checkpoint.latitude, longitude: qr.checkpoint.longitude },
       { latitude: dto.latitude, longitude: dto.longitude },
-      qr.checkpoint.radiusMeters,
-    )
-      ? haversineMeters(
-          { latitude: qr.checkpoint.latitude, longitude: qr.checkpoint.longitude },
-          { latitude: dto.latitude, longitude: dto.longitude },
-        )
-      : null;
+    );
 
-    if (distanceMeters === null) {
+    // Tolerance: the device's location uncertainty is added to the radius.
+    const within = distance <= (qr.checkpoint.radiusMeters + accuracy);
+
+    if (within) {
       // Inside radius -> valid, but guard against duplicate scans in the session.
+      // The @@unique checkpointId+patrolSessionId constraint is the authoritative
+      // guard; a raced creation surfaces as P2002 and maps to a friendly DUPLICATE.
       const existing = await this.prisma.checkpointScan.findUnique({
         where: {
           checkpointId_patrolSessionId: {
@@ -237,22 +300,42 @@ export class CheckpointService {
           ScanResult.DUPLICATE,
           dto.latitude,
           dto.longitude,
-          dto.accuracy ?? null,
+          accuracy,
+          distance,
           'Checkpoint already verified this session',
         );
       }
 
-      return this.recordScan(
-        qr.checkpointId,
-        qr.checkpoint,
-        activeSession.id,
-        tanodId,
-        ScanResult.VALID,
-        dto.latitude,
-        dto.longitude,
-        dto.accuracy ?? null,
-        null,
-      );
+      try {
+        return await this.recordScan(
+          qr.checkpointId,
+          qr.checkpoint,
+          activeSession.id,
+          tanodId,
+          ScanResult.VALID,
+          dto.latitude,
+          dto.longitude,
+          accuracy,
+          distance,
+          null,
+        );
+      } catch (e) {
+        if (this.isUniqueViolation(e)) {
+          return this.recordScan(
+            qr.checkpointId,
+            qr.checkpoint,
+            activeSession.id,
+            tanodId,
+            ScanResult.DUPLICATE,
+            dto.latitude,
+            dto.longitude,
+            accuracy,
+            distance,
+            'Checkpoint already verified this session',
+          );
+        }
+        throw e;
+      }
     }
 
     return this.recordScan(
@@ -263,8 +346,16 @@ export class CheckpointService {
       ScanResult.OUTSIDE_RADIUS,
       dto.latitude,
       dto.longitude,
-      dto.accuracy ?? null,
-      `Outside checkpoint radius (${Math.round(distanceMeters)}m)`,
+      accuracy,
+      distance,
+      `Outside checkpoint radius (${Math.round(distance)}m)`,
+    );
+  }
+
+  private isUniqueViolation(e: unknown): boolean {
+    return (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === 'P2002'
     );
   }
 
@@ -277,6 +368,7 @@ export class CheckpointService {
     latitude: number | null,
     longitude: number | null,
     accuracy: number | null,
+    distanceMeters: number | null,
     failureReason: string | null,
   ) {
     const record = await this.prisma.checkpointScan.create({
@@ -287,6 +379,7 @@ export class CheckpointService {
         latitude,
         longitude,
         accuracy,
+        distanceMeters,
         result,
         failureReason,
       },

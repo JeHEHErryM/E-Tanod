@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -82,6 +82,36 @@ export function PatrolPage() {
 
   const verified = active.data?.checkpointScans.filter((s) => s.result === 'VALID').length ?? 0;
 
+  // Live patrol tracking: while a tanod has an active session, stream device
+  // GPS fixes to the patrol record (throttled) so supervisors see the route.
+  const activeSessionId = active.data?.id ?? null;
+  const isTanod = user?.primaryRole === 'TANOD';
+  useEffect(() => {
+    if (!isTanod || !activeSessionId || !navigator.geolocation) return;
+    let watchId: number | null = null;
+    let lastSent = 0;
+    const post = (latitude: number, longitude: number, accuracy?: number) => {
+      api
+        .post(`/patrol/session/${activeSessionId}/location`, { latitude, longitude, accuracy })
+        .catch(() => {});
+    };
+    const onPosition = (pos: GeolocationPosition) => {
+      const now = Date.now();
+      if (now - lastSent >= 15_000) {
+        lastSent = now;
+        post(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      }
+    };
+    watchId = navigator.geolocation.watchPosition(
+      onPosition,
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000 },
+    );
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    };
+  }, [isTanod, activeSessionId]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -91,7 +121,7 @@ export function PatrolPage() {
       />
 
       {!admin && active.data ? (
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 to-brand-800 p-5 text-sand-50 shadow-panel">
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 to-brand-800 p-5 text-white shadow-panel">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
@@ -102,7 +132,7 @@ export function PatrolPage() {
             <h3 className="font-display text-xl font-black">
               {active.data.patrolAssignment.patrolSchedule.title}
             </h3>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-sand-100/90">
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-white/90">
               <Clock className="h-4 w-4" />
               {active.data.patrolAssignment.patrolSchedule.startTime} –{' '}
               {active.data.patrolAssignment.patrolSchedule.endTime}

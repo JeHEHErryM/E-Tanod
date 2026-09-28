@@ -11,6 +11,7 @@ import { UsersPage } from '@/app/routes/users/UsersPage';
 import { BarangaysPage } from '@/app/routes/barangays/BarangaysPage';
 import { AuditPage } from '@/app/routes/audit/AuditPage';
 import { PatrolPage } from '@/app/routes/patrol/PatrolPage';
+import { SchedulesPage } from '@/app/routes/schedules/SchedulesPage';
 import { ScanPage } from '@/app/routes/scan/ScanPage';
 import { CheckpointsPage } from '@/app/routes/checkpoints/CheckpointsPage';
 import { ResidentsPage } from '@/app/routes/residents/ResidentsPage';
@@ -100,6 +101,14 @@ export default function App() {
             element={
               <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD']}>
                 <PatrolPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/schedules"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <SchedulesPage />
               </RequireRole>
             }
           />

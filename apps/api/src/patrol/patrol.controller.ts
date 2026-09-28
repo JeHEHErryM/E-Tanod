@@ -23,27 +23,34 @@ import {
 export class PatrolController {
   constructor(private readonly patrol: PatrolService) {}
 
+  private scopeFor(actor: AuthUser): string | null {
+    return actor.primaryRole === 'SUPER_ADMIN' ? null : (actor.barangayId ?? null);
+  }
+
   @Get('schedules')
   @Permissions('patrol.manage', 'patrol.monitor')
-  listSchedules(@Query() query: ListPatrolQueryDto) {
-    return this.patrol.listSchedules({
-      page: query.page,
-      pageSize: query.pageSize,
-      barangayId: query.barangayId,
-      status: query.status,
-    });
+  listSchedules(@Query() query: ListPatrolQueryDto, @CurrentUser() actor: AuthUser) {
+    return this.patrol.listSchedules(
+      {
+        page: query.page,
+        pageSize: query.pageSize,
+        barangayId: query.barangayId,
+        status: query.status,
+      },
+      this.scopeFor(actor),
+    );
   }
 
   @Get('schedules/:id')
   @Permissions('patrol.manage', 'patrol.monitor')
-  getSchedule(@Param('id') id: string) {
-    return this.patrol.getSchedule(id);
+  getSchedule(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
+    return this.patrol.getSchedule(id, this.scopeFor(actor));
   }
 
   @Post('schedules')
   @Permissions('patrol.manage', 'patrol.assign')
   createSchedule(@Body() dto: CreatePatrolScheduleDto, @CurrentUser() actor: AuthUser) {
-    return this.patrol.createSchedule(dto, actor.id);
+    return this.patrol.createSchedule(dto, actor.id, this.scopeFor(actor));
   }
 
   @Patch('schedules/:id')
@@ -53,7 +60,7 @@ export class PatrolController {
     @Body() dto: UpdatePatrolScheduleDto,
     @CurrentUser() actor: AuthUser,
   ) {
-    return this.patrol.updateSchedule(id, dto, actor.id);
+    return this.patrol.updateSchedule(id, dto, actor.id, this.scopeFor(actor));
   }
 
   @Get('assignments')
