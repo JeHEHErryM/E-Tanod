@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
@@ -27,13 +28,32 @@ const MAX_ATTACHMENTS = 5;
 const ALLOWED_MIME = /^image\/(jpeg|png|webp|heic|heif)$/;
 
 @Injectable()
-export class IncidentService {
+export class IncidentService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly socket: SocketService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
   ) {}
+
+  /** Ensure the default incident catalogs exist on every boot. */
+  async onModuleInit() {
+    const defaults = [
+      { code: 'THEFT', name: 'Theft', severity: 'MEDIUM' },
+      { code: 'ASSAULT', name: 'Assault', severity: 'HIGH' },
+      { code: 'NOISE', name: 'Noise Disturbance', severity: 'LOW' },
+      { code: 'TRAFFIC', name: 'Traffic Incident', severity: 'MEDIUM' },
+      { code: 'EMERGENCY', name: 'Emergency', severity: 'CRITICAL' },
+      { code: 'SUSPICIOUS', name: 'Suspicious Activity', severity: 'LOW' },
+    ] as const;
+    for (const c of defaults) {
+      await this.prisma.incidentCategory.upsert({
+        where: { code: c.code },
+        update: {},
+        create: c,
+      });
+    }
+  }
 
   private uploadDir() {
     return this.config.get<string>('UPLOAD_DIR', join(process.cwd(), 'uploads'));
