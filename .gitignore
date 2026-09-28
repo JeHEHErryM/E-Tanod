@@ -10,3 +10,5 @@ coverage/
 .env.production.local
 .DS_Store
 *.pid
+
+.vercel
