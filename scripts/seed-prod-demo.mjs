@@ -100,6 +100,14 @@ async function main() {
     let user = existing.find((u) => u.username === a.username);
     const barangay = [...bById.values()].find((b) => b.code === a.barangay);
     if (!barangay) throw new Error(`Missing barangay ${a.barangay}`);
+    // Enforce a known demo password + verified/active state + barangay assignment
+    // so every demo account is usable at the defense.
+    const patch = {
+      isVerified: true,
+      isActive: true,
+      barangayId: barangay.id,
+      password: DEMO_PASS,
+    };
     if (!user) {
       user = await req('/users', {
         method: 'POST',
@@ -113,19 +121,11 @@ async function main() {
           barangayId: barangay.id,
         }),
       });
-      user = await req(`/users/${user.id}`, {
-        method: 'PATCH',
-        headers: auth,
-        body: JSON.stringify({ isVerified: true, isActive: true }),
-      });
+      user = await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
       console.log('  created account', a.username);
-    } else if (!user.isVerified || !user.isActive) {
-      user = await req(`/users/${user.id}`, {
-        method: 'PATCH',
-        headers: auth,
-        body: JSON.stringify({ isVerified: true, isActive: true }),
-      });
-      console.log('  verified existing account', a.username);
+    } else {
+      user = await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
+      console.log('  reset demo account', a.username);
     }
     createdById[a.username] = user.id;
   }
@@ -159,61 +159,62 @@ async function main() {
 
   // --- Incidents (geo data for map + heatmap) ---
   const existingI = listOf(await req('/incidents?pageSize=100', { headers: auth }));
-  if (existingI.length === 0) {
-    const categories = listOf(await req('/incidents/categories', { headers: auth }));
-    const cat = (code) => categories.find((c) => c.code === code)?.id;
+  const haveDesc = new Set(existingI.map((i) => i.description.trim().toLowerCase()));
 
-    // login as resident for two RESIDENT-sourced reports
-    let residentAuth = auth;
-    try {
-      const r = await req('/auth/login', { method: 'POST', body: JSON.stringify({ username: 'resident1', password: DEMO_PASS }) });
-      residentAuth = { Authorization: `Bearer ${r.accessToken}` };
-    } catch {
-      /* fall back to superadmin */
-    }
+  const categories = listOf(await req('/incidents/categories', { headers: auth }));
+  const cat = (code) => categories.find((c) => c.code === code)?.id;
 
-    const samples = [
-      { code: 'THEFT', desc: 'Reported a snatching attempt near the public market.', b: 'PAYOM', dLat: -0.002, dLng: 0.001, anon: false, viaResident: false },
-      { code: 'NOISE', desc: 'Loud videoke sound after 11pm.', b: 'POB02', dLat: 0.0005, dLng: -0.0002, anon: true, viaResident: false },
-      { code: 'EMERGENCY', desc: 'Possible gas leak near the port area.', b: 'TAYAM', dLat: -0.0015, dLng: 0.006, anon: false, viaResident: false },
-      { code: 'ASSAULT', desc: 'Minor altercation outside a sari-sari store.', b: 'POB05', dLat: -0.001, dLng: -0.002, anon: true, viaResident: false },
-      { code: 'SUSPICIOUS', desc: 'Unattended vehicle circling the barangay hall at night.', b: 'BALAN', dLat: 0.003, dLng: -0.002, anon: false, viaResident: false },
-      { code: 'TRAFFIC', desc: 'Road accident at the highway junction, no injuries.', b: 'FATII', dLat: -0.005, dLng: 0.003, anon: false, viaResident: true },
-      { code: 'THEFT', desc: 'Lost motorbike reported missing from the parking area.', b: 'TALAB', dLat: -0.009, dLng: -0.003, anon: false, viaResident: false },
-      { code: 'EMERGENCY', desc: 'Fire alarm near the school grounds.', b: 'POB07', dLat: 0.0006, dLng: -0.0004, anon: false, viaResident: true },
-      { code: 'NOISE', desc: 'Continuous barking / stray dogs at the residential area.', b: 'TANGK', dLat: -0.006, dLng: -0.006, anon: true, viaResident: false },
-      { code: 'ASSAULT', desc: 'Report of a fight during the fiesta gathering.', b: 'POB01', dLat: 0.0, dLng: 0.0, anon: false, viaResident: false },
-      { code: 'TRAFFIC', desc: 'Tricycle collision near the plaza.', b: 'POB03', dLat: -0.0003, dLng: -0.0001, anon: false, viaResident: false },
-      { code: 'SUSPICIOUS', desc: 'Loitering near the waterfront at dusk.', b: 'TAYAM', dLat: 0.001, dLng: 0.008, anon: true, viaResident: true },
-    ];
-    for (const s of samples) {
-      const id = cat(s.code);
-      if (!id) {
-        console.log('  !! category missing for', s.code);
-        continue;
-      }
-      for (const br of bById.values()) {
-        if (br.code === s.b) {
-          await req('/incidents', {
-            method: 'POST',
-            headers: s.viaResident ? residentAuth : auth,
-            body: JSON.stringify({
-              categoryId: id,
-              description: s.desc,
-              latitude: CENTER_LAT + s.dLat,
-              longitude: CENTER_LNG + s.dLng,
-              barangayId: br.id,
-              isAnonymous: s.anon,
-            }),
-          });
-          break;
-        }
-      }
-    }
-    console.log('  created 12 demo incidents');
-  } else {
-    console.log(`Incidents already present: ${existingI.length}, skipping incident seed.`);
+  // login as resident for RESIDENT-sourced reports
+  let residentAuth = auth;
+  try {
+    const r = await req('/auth/login', { method: 'POST', body: JSON.stringify({ username: 'resident1', password: DEMO_PASS }) });
+    residentAuth = { Authorization: `Bearer ${r.accessToken}` };
+  } catch {
+    /* fall back to superadmin */
   }
+
+  const samples = [
+    { code: 'THEFT', desc: 'Reported a snatching attempt near the public market.', b: 'PAYOM', dLat: -0.002, dLng: 0.001, anon: false, viaResident: false },
+    { code: 'NOISE', desc: 'Loud videoke sound after 11pm.', b: 'POB02', dLat: 0.0005, dLng: -0.0002, anon: true, viaResident: false },
+    { code: 'EMERGENCY', desc: 'Possible gas leak near the port area.', b: 'TAYAM', dLat: -0.0015, dLng: 0.006, anon: false, viaResident: false },
+    { code: 'ASSAULT', desc: 'Minor altercation outside a sari-sari store.', b: 'POB05', dLat: -0.001, dLng: -0.002, anon: true, viaResident: false },
+    { code: 'SUSPICIOUS', desc: 'Unattended vehicle circling the barangay hall at night.', b: 'BALAN', dLat: 0.003, dLng: -0.002, anon: false, viaResident: false },
+    { code: 'TRAFFIC', desc: 'Road accident at the highway junction, no injuries.', b: 'FATII', dLat: -0.005, dLng: 0.003, anon: false, viaResident: true },
+    { code: 'THEFT', desc: 'Lost motorbike reported missing from the parking area.', b: 'TALAB', dLat: -0.009, dLng: -0.003, anon: false, viaResident: false },
+    { code: 'EMERGENCY', desc: 'Fire alarm near the school grounds.', b: 'POB07', dLat: 0.0006, dLng: -0.0004, anon: false, viaResident: true },
+    { code: 'NOISE', desc: 'Continuous barking / stray dogs at the residential area.', b: 'TANGK', dLat: -0.006, dLng: -0.006, anon: true, viaResident: false },
+    { code: 'ASSAULT', desc: 'Report of a fight during the fiesta gathering.', b: 'POB01', dLat: 0.0, dLng: 0.0, anon: false, viaResident: false },
+    { code: 'TRAFFIC', desc: 'Tricycle collision near the plaza.', b: 'POB03', dLat: -0.0003, dLng: -0.0001, anon: false, viaResident: false },
+    { code: 'SUSPICIOUS', desc: 'Loitering near the waterfront at dusk.', b: 'TAYAM', dLat: 0.001, dLng: 0.008, anon: true, viaResident: true },
+  ];
+  let createdIncidents = 0;
+  for (const s of samples) {
+    if (haveDesc.has(s.desc.trim().toLowerCase())) continue;
+    const id = cat(s.code);
+    if (!id) {
+      console.log('  !! category missing for', s.code);
+      continue;
+    }
+    for (const br of bById.values()) {
+      if (br.code === s.b) {
+        await req('/incidents', {
+          method: 'POST',
+          headers: s.viaResident ? residentAuth : auth,
+          body: JSON.stringify({
+            categoryId: id,
+            description: s.desc,
+            latitude: CENTER_LAT + s.dLat,
+            longitude: CENTER_LNG + s.dLng,
+            barangayId: br.id,
+            isAnonymous: s.anon,
+          }),
+        });
+        createdIncidents += 1;
+        break;
+      }
+    }
+  }
+  console.log(`  incidents created: ${createdIncidents} (existing: ${existingI.length})`);
 
   console.log('Seed complete.');
   console.log(`Demo accounts (password: ${DEMO_PASS}): barangayadmin, tanod1, tanod2, resident1`);
