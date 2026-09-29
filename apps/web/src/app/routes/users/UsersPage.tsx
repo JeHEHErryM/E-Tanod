@@ -7,7 +7,6 @@ import { api, getErrorMessage } from '@/services/api';
 import { Card, Button, Spinner, EmptyState, Sheet, Input, PasswordInput, Select } from '@e-tanod/ui';
 import type { Barangay, PaginatedResult } from '@e-tanod/types';
 import type { RoleName } from '@e-tanod/types';
-import { roleMeta } from '@/app/roles';
 import { StatusLabel } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDateTime } from '@/app/lib/format';
@@ -112,13 +111,9 @@ export function UsersPage() {
         >
           <ul className="divide-y divide-ink-100">
             {pendingUsers.data!.data.map((u) => {
-              const meta = roleMeta(u.primaryRole);
               return (
                 <li key={u.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.tint}`}>
-                      <meta.icon className="h-5 w-5" />
-                    </span>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2">
                         <span className="truncate font-bold text-ink-900">{u.fullName}</span>
@@ -190,15 +185,11 @@ export function UsersPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {activeUsers.data!.data.map((u) => {
-            const meta = roleMeta(u.primaryRole);
             return (
               <div
                 key={u.id}
                 className="flex items-start gap-3.5 rounded-2xl border border-ink-100 bg-white p-4 shadow-card transition-all hover:border-brand-200 hover:shadow-card-hover"
               >
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${meta.tint}`}>
-                  <meta.icon className="h-5 w-5" />
-                </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold text-ink-900">{u.fullName}</div>
                   <div className="truncate text-xs text-ink-400">@{u.username}</div>

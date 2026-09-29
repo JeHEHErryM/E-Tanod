@@ -57,7 +57,13 @@ export function PatrolPage() {
 
   const active = useQuery<ActiveSession | null>({
     queryKey: ['active-session'],
-    queryFn: async () => (await api.get<ActiveSession | null>('/patrol/session/active')).data,
+    // The endpoint returns an empty 200 body when there's no active session,
+    // which axios turns into "" — normalize to null so downstream truthiness
+    // checks and optional chaining behave.
+    queryFn: async () => {
+      const res = await api.get<ActiveSession | null>('/patrol/session/active');
+      return res.data && typeof res.data === 'object' ? res.data : null;
+    },
   });
 
   const startPatrol = useMutation({
@@ -80,7 +86,7 @@ export function PatrolPage() {
     },
   });
 
-  const verified = active.data?.checkpointScans.filter((s) => s.result === 'VALID').length ?? 0;
+  const verified = (active.data?.checkpointScans ?? []).filter((s) => s.result === 'VALID').length;
 
   // Live patrol tracking: while a tanod has an active session, stream device
   // GPS fixes to the patrol record (throttled) so supervisors see the route.

@@ -16,7 +16,7 @@ import { api, getErrorMessage } from '@/services/api';
 import { Card, Stat, CardSkeleton, Button } from '@e-tanod/ui';
 import { AppLogo } from '@/app/components/AppLogo';
 import type { DashboardStats } from '@e-tanod/types';
-import { isAdmin, isField, roleMeta } from '@/app/roles';
+import { isAdmin, isField } from '@/app/roles';
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -26,7 +26,6 @@ export function DashboardPage() {
   const field = isField(user?.primaryRole);
   const isTanod = user?.primaryRole === 'TANOD';
   const isResident = user?.primaryRole === 'RESIDENT';
-  const role = roleMeta(user?.primaryRole);
 
   const quickActions = isTanod
     ? [
@@ -63,8 +62,7 @@ export function DashboardPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
             <AppLogo size={56} light />
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
-                <role.icon className="h-3.5 w-3.5" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-brand-200">
                 {t(`role.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
               </span>
               <h1 className="mt-2.5 font-display text-xl font-black tracking-tight text-balance sm:mt-3 sm:text-3xl">

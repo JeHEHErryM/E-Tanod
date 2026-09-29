@@ -44,7 +44,12 @@ export function ScanPage() {
 
   const active = useQuery<ActiveSession | null>({
     queryKey: ['active-session'],
-    queryFn: async () => (await api.get<ActiveSession | null>('/patrol/session/active')).data,
+    // Endpoint returns an empty 200 body when idle → axios yields ""; normalize
+    // to null so the rest of the page can rely on strict null checks.
+    queryFn: async () => {
+      const res = await api.get<ActiveSession | null>('/patrol/session/active');
+      return res.data && typeof res.data === 'object' ? res.data : null;
+    },
   });
 
   const locate = () =>

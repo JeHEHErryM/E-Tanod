@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
 import { Button } from '@e-tanod/ui';
 import type { RoleName } from '@e-tanod/types';
-import { isAdmin, roleMeta } from '@/app/roles';
+import { isAdmin } from '@/app/roles';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { useIsMobile } from '@/app/lib/useIsMobile';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
@@ -102,7 +102,6 @@ export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const admin = isAdmin(user?.primaryRole);
-  const meta = roleMeta(user?.primaryRole);
 
   const handleLogout = async () => {
     await logout();
@@ -177,12 +176,6 @@ export function AppLayout() {
               </div>
               <div className="text-xs text-ink-400">@{user?.username}</div>
             </div>
-            <span className="hidden items-center gap-1.5 rounded-lg bg-white/70 px-2 py-1 text-xs font-bold text-ink-600 ring-1 ring-ink-100 sm:inline-flex">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-md ${meta.tint}`}>
-                <meta.icon className="h-3 w-3" />
-              </span>
-              {t(`roleShort.${user?.primaryRole ?? 'SUPER_ADMIN'}`)}
-            </span>
             <LanguageToggle />
             <ThemeToggle />
             <button
@@ -251,7 +244,6 @@ function UserCard() {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const meta = roleMeta(user?.primaryRole);
 
   const handleLogout = async () => {
     await logout();
@@ -260,9 +252,6 @@ function UserCard() {
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-sand-50 p-2.5">
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${meta.tint}`}>
-        <meta.icon className="h-5 w-5" />
-      </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-bold text-ink-900">
           {user?.fullName || user?.username}

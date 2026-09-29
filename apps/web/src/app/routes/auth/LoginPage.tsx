@@ -166,9 +166,8 @@ export function LoginPage() {
                     setUsername(d.user);
                     setError('');
                   }}
-                  className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-sand-100"
+                  className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-sand-100"
                 >
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${d.tint}`} />
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-semibold text-ink-700">{t(`role.${d.roleKey}`)}</span>
                     <span className="block truncate font-mono text-[11px] text-ink-400">{d.user}</span>

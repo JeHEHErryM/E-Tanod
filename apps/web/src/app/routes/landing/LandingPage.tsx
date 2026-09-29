@@ -1,15 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  ShieldCheck,
-  MapPin,
-  QrCode,
-  Users,
   Smartphone,
   Mail,
   ArrowDown,
   CheckCircle2,
-  type LucideIcon,
 } from 'lucide-react';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
@@ -17,12 +12,7 @@ import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 const CONTACT_EMAIL = 'hello@example.com';
 
-const FEATURES: { key: string; icon: LucideIcon; tint: string }[] = [
-  { key: 'checkpoints', icon: QrCode, tint: 'bg-brand-50 text-brand-700' },
-  { key: 'map', icon: MapPin, tint: 'bg-rose-50 text-rose-600' },
-  { key: 'patrol', icon: ShieldCheck, tint: 'bg-sky-50 text-sky-700' },
-  { key: 'reports', icon: Users, tint: 'bg-emerald-50 text-emerald-700' },
-];
+const FEATURES = ['checkpoints', 'map', 'patrol', 'reports'] as const;
 
 const INSTALL_STEPS = ['installAndroid', 'installIos', 'installDesktop'] as const;
 
@@ -80,11 +70,10 @@ function Hero({ onFeatures }: { onFeatures: () => void }) {
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-500/25 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 -left-12 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
       <div className="relative z-10 max-w-2xl">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
-          <ShieldCheck className="h-3.5 w-3.5" />
+        <span className="text-xs font-semibold uppercase tracking-widest text-brand-200">
           {t('landing.badge')}
         </span>
-        <h1 className="mt-6 font-display text-3xl font-black leading-tight tracking-tight text-balance sm:text-5xl">
+        <h1 className="mt-3 font-display text-3xl font-black leading-tight tracking-tight text-balance sm:text-5xl">
           {t('login.heroTitle')}
         </h1>
         <p className="mt-5 max-w-xl text-sm leading-relaxed text-brand-100/90 sm:text-base">
@@ -124,17 +113,14 @@ function Features() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {FEATURES.map((f) => (
           <div
-            key={f.key}
+            key={f}
             className="rounded-3xl border border-ink-100 bg-white p-6 shadow-card transition-all hover:border-brand-200 hover:shadow-card-hover"
           >
-            <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${f.tint}`}>
-              <f.icon className="h-6 w-6" />
-            </span>
-            <h3 className="mt-4 font-display text-lg font-black text-ink-900">
-              {t(`landing.feat.${f.key}.title`)}
+            <h3 className="font-display text-lg font-black text-ink-900">
+              {t(`landing.feat.${f}.title`)}
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
-              {t(`landing.feat.${f.key}.desc`)}
+              {t(`landing.feat.${f}.desc`)}
             </p>
           </div>
         ))}
