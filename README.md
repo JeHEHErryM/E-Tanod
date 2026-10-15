@@ -72,14 +72,23 @@ The web app runs at `http://localhost:5173` and the API at `http://localhost:300
 
 ## Demo Accounts
 
-Seed data (password: `Demo123!`) — clearly marked as DEMO, not real Mamburao data:
-
 | Username      | Role             |
 |---------------|------------------|
 | superadmin    | Super Admin      |
 | barangayadmin | Barangay Admin   |
 | tanod1 / tanod2 | Tanod          |
 | resident1     | Resident         |
+
+Passwords differ by environment:
+
+- **Local dev seed** (`pnpm --filter @e-tanod/api prisma:seed`): all demo accounts and
+  `superadmin` use `DemoPass123!`, unless `SUPERADMIN_PASSWORD` is set (then only the
+  super admin differs).
+- **Production demo seed** (`scripts/seed-prod-demo.mjs`): `barangayadmin`, `tanod1`,
+  `tanod2`, `resident1` use `Demo123!` (override with `E_TANOD_DEMO_PASS`); the super
+  admin password is supplied via `E_TANOD_PASS` and is never stored in the repo.
+
+Seed data is clearly marked as DEMO, not real Mamburao data.
 
 ## Scripts
 
@@ -108,31 +117,55 @@ Never commit real `.env` files or secrets.
 
 Details in `docs/architecture/README.md`.
 
-## Deployment (Railway)
+## Deployment
 
-This is a shared pnpm + Turborepo monorepo, so each service is configured with a
-per-package `railway.json` (Railway auto-detects these at each package root). Do **not**
-set a Root Directory — Railway uses the workspace-filtered `pnpm --filter` commands:
+The API and PostgreSQL run on **Railway**; the web PWA is deployed to **Vercel**.
+
+### API (Railway)
+
+This is a shared pnpm + Turborepo monorepo, so the API is configured with a
+per-package `apps/api/railway.json` (Railway auto-detects it at the package root). Do
+**not** set a Root Directory — Railway builds `apps/api/Dockerfile`, runs
+`prisma migrate deploy` on pre-deploy, and starts with `start:prod`:
 
 - **E-Tanod API** — `apps/api/railway.json` (NestJS + Prisma). Builds with
   `pnpm --filter @e-tanod/api build` (runs `prisma generate && nest build`), runs
   `prisma migrate deploy` on pre-deploy, and starts with `start:prod`. Healthcheck: `/health`.
-- **E-Tanod Web** — `apps/web/railway.json` (Vite PWA). Builds with
-  `pnpm --filter @e-tanod/web build` and serves `dist` via `serve` on `$PORT`.
 - **PostgreSQL** — add a Railway Postgres service and point `DATABASE_URL` at it.
+
+### Web (Vercel)
+
+The web app is linked to Vercel from the **repository root** (`.vercel/project.json`;
+the project's Root Directory is `apps/web`, honoring `apps/web/vercel.json`). Deploy
+from the repo root:
+
+```bash
+cmd.exe /c "C:\Users\Josh\AppData\Roaming\npm\vercel.cmd deploy --prod --yes"
+```
+
+Do not run `vercel deploy` from inside `apps/web` — the project link is at the repo
+root. `VITE_*` variables are inlined at build time, so redeploy after changing them.
 
 ### Notes
 - The api `postinstall` runs `prisma generate`, so a fresh `pnpm install` produces the
   generated Prisma client automatically.
-- Never commit a real `.env`. Set variables in Railway per the `.env.example` files
-  (`DATABASE_URL`, `JWT_*` secrets, `CORS_ORIGIN`, `WEB_URL`, `SOCKET_URL`,
-  `MAPBOX_PUBLIC_TOKEN`, `UPLOAD_DIR`, `MAX_UPLOAD_BYTES`).
+- Never commit a real `.env`. Set variables in Railway/Vercel per the `.env.example`
+  files (`DATABASE_URL`, `JWT_*` secrets, `CORS_ORIGIN`, `WEB_URL`, `SOCKET_URL`,
+  `MAPBOX_PUBLIC_TOKEN`, `VITE_API_URL`, `VITE_SOCKET_URL`, `VITE_MAPBOX_PUBLIC_TOKEN`,
+  `UPLOAD_DIR`, `MAX_UPLOAD_BYTES`).
 - Use `pnpm install --frozen-lockfile` in CI to keep `pnpm-lock.yaml` authoritative.
+
+See `docs/deployment.md` for the full runbook (URLs, seeding production, rollback,
+known quirks).
 
 ## Documentation
 
-See `docs/architecture/README.md` for the full architecture reference (ERD, permission
-matrix, API structure, security, offline, and GIS designs).
+- `docs/architecture/README.md` — full architecture reference (ERD, permission matrix,
+  API structure, security, offline, and GIS designs).
+- `docs/deployment.md` — deployment runbook (Railway API + Vercel web, seeding, rollback).
+- `docs/demo-script.md` — defense/demo walkthrough per role.
+- `docs/qa-checklist.md` — pre-demo functional, dark-mode, and responsive QA checklist.
+- `docs/startup-pitch.md` — startup concept and market framing.
 
 ## Research Context
 
