@@ -12,6 +12,7 @@ import {
   Users,
   Building2,
   ScrollText,
+  BarChart3,
   Menu,
   LogOut,
   type LucideIcon,
@@ -25,7 +26,9 @@ import { BrandWordmark } from '@/app/components/AppLogo';
 import { useIsMobile } from '@/app/lib/useIsMobile';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
 import { ThemeToggle } from '@/app/components/ThemeToggle';
+import { SyncStatus } from '@/app/components/SyncStatus';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
+import { useSyncStore } from '@/stores/sync';
 
 interface NavItem {
   to: string;
@@ -43,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/checkpoints', labelKey: 'nav.checkpoints', icon: MapPin, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/gis', labelKey: 'nav.gis', icon: MapIcon, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/incidents', labelKey: 'nav.incidents', icon: Siren, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN', 'TANOD'] },
+  { to: '/reports', labelKey: 'nav.reports', icon: BarChart3, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/residents', labelKey: 'nav.residents', icon: Home, roles: ['RESIDENT'] },
   { to: '/users', labelKey: 'nav.users', icon: Users, roles: ['SUPER_ADMIN', 'BARANGAY_ADMIN'] },
   { to: '/barangays', labelKey: 'nav.barangays', icon: Building2, roles: ['SUPER_ADMIN'] },
@@ -110,6 +114,7 @@ export function AppLayout() {
 
   // Field users on mobile: bottom tab bar instead of drawer
   const useBottomTabs = isMobile && !admin;
+  const online = useSyncStore((s) => s.online);
 
   return (
     <div className="app-shell flex">
@@ -178,6 +183,7 @@ export function AppLayout() {
             </div>
             <LanguageToggle />
             <ThemeToggle />
+            <SyncStatus />
             <button
               onClick={handleLogout}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800"
@@ -187,6 +193,12 @@ export function AppLayout() {
             </button>
           </div>
         </header>
+
+        {!online ? (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-100">
+            {t('sync.offlineBanner')}
+          </div>
+        ) : null}
 
         {/* Main content */}
         <main

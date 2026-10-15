@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
-import { QrCode, MapPin, CheckCircle2, XCircle, Crosshair, ScanLine, Camera, X } from 'lucide-react';
+import { QrCode, MapPin, CheckCircle2, XCircle, Crosshair, ScanLine, Camera, X, CloudOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
@@ -11,6 +11,7 @@ import { isAdmin } from '@/app/roles';
 import { StatusLabel } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatTime } from '@/app/lib/format';
+import { enqueue, isNetworkError, isOffline } from '@/lib/offline/queue';
 
 interface ScanResponse {
   result: ScanResult;
@@ -37,6 +38,7 @@ export function ScanPage() {
   const [token, setToken] = useState('');
   const [locationError, setLocationError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ScanResponse | null>(null);
+  const [queued, setQueued] = useState(false);
   const [hasLocation, setHasLocation] = useState(false);
   const [locating, setLocating] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -85,20 +87,40 @@ export function ScanPage() {
   };
 
   const scan = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<{ queued: true } | { queued: false; data: ScanResponse }> => {
       const pos = await locate();
-      const res = await api.post<ScanResponse>('/checkpoints/scan', {
+      const payload = {
         token: token.trim(),
         latitude: pos.latitude,
         longitude: pos.longitude,
         accuracy: pos.accuracy,
-      });
-      return res.data;
+      };
+      if (isOffline()) {
+        await enqueue({ entityType: 'CHECKPOINT_SCAN', payload });
+        return { queued: true };
+      }
+      try {
+        const res = await api.post<ScanResponse>('/checkpoints/scan', payload);
+        return { queued: false, data: res.data };
+      } catch (e) {
+        if (isNetworkError(e)) {
+          await enqueue({ entityType: 'CHECKPOINT_SCAN', payload });
+          return { queued: true };
+        }
+        throw e;
+      }
     },
-    onSuccess: (data) => {
-      setLastResult(data);
+    onSuccess: (res) => {
       setHasLocation(true);
-      if (data.result === 'VALID') {
+      if (res.queued) {
+        setQueued(true);
+        setLastResult(null);
+        setToken('');
+        return;
+      }
+      setQueued(false);
+      setLastResult(res.data);
+      if (res.data.result === 'VALID') {
         qc.invalidateQueries({ queryKey: ['active-session'] });
       }
     },
@@ -229,6 +251,18 @@ export function ScanPage() {
             ) : null}
           </div>
         </Card>
+
+        {queued ? (
+          <div className="flex items-start gap-3 rounded-3xl border border-sky-200 bg-sky-50 p-5 text-sky-800 shadow-card">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500 text-white">
+              <CloudOff className="h-6 w-6" />
+            </span>
+            <div>
+              <h3 className="font-display text-lg font-black text-sky-900">{t('scan.queuedTitle')}</h3>
+              <p className="text-sm text-sky-800">{t('scan.queuedDesc')}</p>
+            </div>
+          </div>
+        ) : null}
 
         {lastResult && resMeta ? (
           <div

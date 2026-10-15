@@ -8,6 +8,7 @@
     "gis": "Incident Map",
     "residents": "My Reports",
     "incidents": "Incidents",
+    "reports": "Reports",
     "users": "Users",
     "barangays": "Barangays",
     "audit": "Audit Logs"
@@ -136,6 +137,11 @@
     "endShort": "End",
     "adminActiveTitle": "Active Session",
     "active": "ACTIVE",
+    "liveTitle": "Live Patrols",
+    "liveEmpty": "No patrols are active right now.",
+    "lastSeen": "Updated {{ago}}",
+    "noSignal": "No signal yet",
+    "scansCount": "{{count}} scan(s)",
     "allAssignments": "All Assignments",
     "myAssignments": "My Assignments",
     "emptyTitle": "No assignments yet",
@@ -205,6 +211,8 @@
     "cameraClose": "Close camera",
     "verify": "Verify Checkpoint",
     "onlyTanod": "Only an active patrol tanod can verify a checkpoint.",
+    "queuedTitle": "Scan queued offline",
+    "queuedDesc": "No connection right now — the scan is saved on this device and will sync automatically when you're back online.",
     "scannedAt": "Scanned at {{time}}",
     "result": {
       "VALID": { "title": "Checkpoint verified", "desc": "Location matched within the geofence radius." },
@@ -215,6 +223,14 @@
       "OUTSIDE_RADIUS": { "title": "Outside geofence", "desc": "You are too far from this checkpoint to verify it." },
       "INVALID": { "title": "Invalid token", "desc": "This QR token could not be matched to a checkpoint." }
     }
+  },
+  "sync": {
+    "offline": "Offline",
+    "syncing": "Syncing…",
+    "pending": "{{count}} pending",
+    "failed": "{{count}} failed",
+    "syncNow": "Sync queued changes now",
+    "offlineBanner": "You're offline. Changes are saved on this device and will sync automatically when the connection returns."
   },
   "incidents": {
     "title": "Incidents",
@@ -374,6 +390,47 @@
     "emptyDesc": "Security-sensitive actions will be logged here.",
     "system": "system"
   },
+  "reports": {
+    "title": "Reports",
+    "desc": "Patrol compliance by tanod for the selected period",
+    "downloadCsv": "Export CSV",
+    "from": "From",
+    "to": "To",
+    "tanod": "Tanod",
+    "assigned": "Assigned",
+    "completed": "Completed",
+    "sessions": "Sessions",
+    "validScans": "Valid scans",
+    "compliance": "Compliance",
+    "emptyTitle": "No patrol data",
+    "emptyDesc": "No patrol assignments fall within the selected date range.",
+    "range": "Showing {{from}} – {{to}}"
+  },
+  "residentReport": {
+    "title": "Report an incident",
+    "desc": "Send a report to your barangay. You can stay anonymous and track the status with a code.",
+    "tab": {
+      "report": "Submit report",
+      "track": "Track report"
+    },
+    "backToLogin": "Back to sign in",
+    "message": "What happened?",
+    "messagePlaceholder": "Describe the incident, location, and any details that may help.",
+    "contact": "Contact (optional)",
+    "contactPlaceholder": "Phone or email — leave blank to stay anonymous",
+    "useLocation": "Attach my location",
+    "locationCaptured": "Location attached",
+    "submit": "Submit report",
+    "successTitle": "Report submitted",
+    "successDesc": "Keep this tracking code to check the status of your report.",
+    "copyHint": "Tap the code to copy it.",
+    "another": "Submit another report",
+    "trackingCode": "Tracking code",
+    "trackButton": "Check status",
+    "notFound": "No report found for that tracking code.",
+    "category": "Category",
+    "reportedAt": "Reported at"
+  },
   "error": {
     "title": "Something went wrong",
     "desc": "An unexpected error occurred while rendering this view.",
@@ -386,6 +443,7 @@
     "ctaSignIn": "Sign in",
     "ctaSignup": "Create account",
     "ctaFeatures": "See features",
+    "ctaReport": "Report an incident",
     "featuresTitle": "Everything your barangay needs",
     "featuresDesc": "Built for tanods and barangay officials, E-Tanod keeps patrols accountable and incidents visible in real time.",
     "feat": {

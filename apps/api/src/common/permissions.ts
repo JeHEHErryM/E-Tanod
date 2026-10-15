@@ -22,6 +22,8 @@ export type Permission =
   | 'reports.view'
   | 'resident.report'
   | 'resident.track'
+  | 'sync.write'
+  | 'sync.read'
   | 'audit.view'
   | 'system.config';
 
@@ -48,6 +50,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports.view',
     'resident.report',
     'resident.track',
+    'sync.write',
+    'sync.read',
     'audit.view',
     'system.config',
   ],
@@ -67,6 +71,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'gis.view',
     'reports.view',
     'resident.track',
+    'sync.write',
+    'sync.read',
     'audit.view',
   ],
   TANOD: [
@@ -77,6 +83,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'incident.report',
     'incident.read',
     'resident.track',
+    'sync.write',
+    'sync.read',
   ],
-  RESIDENT: ['resident.report', 'resident.track'],
+  RESIDENT: ['resident.report', 'resident.track', 'sync.write', 'sync.read'],
 };

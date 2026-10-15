@@ -8,6 +8,7 @@ import {
   Square,
   Clock,
   CheckCircle2,
+  Radio,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { api, getErrorMessage } from '@/services/api';
@@ -16,7 +17,8 @@ import type { PatrolStatus } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
 import { StatusLabel, patrolStatusTone } from '@/app/components/StatusLabel';
 import { PageHeader } from '@/app/components/PageHeader';
-import { formatDate } from '@/app/lib/format';
+import { formatDate, timeAgo } from '@/app/lib/format';
+import { enqueue, isNetworkError, isOffline } from '@/lib/offline/queue';
 
 interface Assignment {
   id: string;
@@ -42,6 +44,25 @@ interface ActiveSession {
   checkpointScans: { checkpoint: { name: string }; result: string; scannedAt: string }[];
 }
 
+interface MonitorSession {
+  id: string;
+  tanod: { id: string; fullName: string; username: string };
+  startedAt: string;
+  schedule: string;
+  barangay: string | null;
+  lastSeenAt: string | null;
+  lastLocation: { latitude: number; longitude: number; accuracy: number | null } | null;
+  checkpointScans: number;
+}
+
+function freshnessTone(lastSeenAt: string | null): 'success' | 'warning' | 'danger' {
+  if (!lastSeenAt) return 'danger';
+  const age = Date.now() - new Date(lastSeenAt).getTime();
+  if (age <= 60_000) return 'success';
+  if (age <= 180_000) return 'warning';
+  return 'danger';
+}
+
 export function PatrolPage() {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -64,6 +85,13 @@ export function PatrolPage() {
       const res = await api.get<ActiveSession | null>('/patrol/session/active');
       return res.data && typeof res.data === 'object' ? res.data : null;
     },
+  });
+
+  const monitor = useQuery<MonitorSession[]>({
+    queryKey: ['patrol-monitor'],
+    enabled: admin,
+    refetchInterval: 15_000,
+    queryFn: async () => (await api.get<MonitorSession[]>('/patrol/monitor')).data,
   });
 
   const startPatrol = useMutation({
@@ -97,9 +125,18 @@ export function PatrolPage() {
     let watchId: number | null = null;
     let lastSent = 0;
     const post = (latitude: number, longitude: number, accuracy?: number) => {
+      const payload = { latitude, longitude, accuracy };
+      if (isOffline()) {
+        void enqueue({ entityType: 'PATROL_LOCATION', entityId: activeSessionId, payload });
+        return;
+      }
       api
-        .post(`/patrol/session/${activeSessionId}/location`, { latitude, longitude, accuracy })
-        .catch(() => {});
+        .post(`/patrol/session/${activeSessionId}/location`, payload)
+        .catch((error) => {
+          if (isNetworkError(error)) {
+            void enqueue({ entityType: 'PATROL_LOCATION', entityId: activeSessionId, payload });
+          }
+        });
     };
     const onPosition = (pos: GeolocationPosition) => {
       const now = Date.now();
@@ -173,6 +210,53 @@ export function PatrolPage() {
           <Button variant="danger" size="sm" className="mt-3" onClick={() => setEndSheetOpen(true)}>
             <Square className="h-4 w-4" /> {t('patrol.endShort')}
           </Button>
+        </Card>
+      ) : null}
+
+      {admin ? (
+        <Card
+          title={t('patrol.liveTitle')}
+          icon={<Radio className="h-4 w-4" />}
+          actions={
+            monitor.isFetching ? <Spinner className="h-4 w-4 text-brand-600" /> : undefined
+          }
+        >
+          {monitor.isLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner className="text-brand-600" />
+            </div>
+          ) : (monitor.data ?? []).length === 0 ? (
+            <p className="text-sm text-ink-500">{t('patrol.liveEmpty')}</p>
+          ) : (
+            <ul className="divide-y divide-ink-100">
+              {(monitor.data ?? []).map((s) => {
+                const tone = freshnessTone(s.lastSeenAt);
+                const ago = timeAgo(s.lastSeenAt);
+                return (
+                  <li key={s.id} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold text-ink-900">
+                        {s.tanod.fullName || s.tanod.username}
+                      </div>
+                      <div className="truncate text-xs text-ink-400">
+                        {s.schedule}
+                        {s.barangay ? ` · ${s.barangay}` : ''} ·{' '}
+                        {t('patrol.scansCount', { count: s.checkpointScans })}
+                      </div>
+                    </div>
+                    <StatusLabel
+                      tone={tone}
+                      label={
+                        s.lastSeenAt
+                          ? t('patrol.lastSeen', { ago: ago ?? '' })
+                          : t('patrol.noSignal')
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </Card>
       ) : null}
 

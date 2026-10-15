@@ -16,7 +16,10 @@ import { ScanPage } from '@/app/routes/scan/ScanPage';
 import { CheckpointsPage } from '@/app/routes/checkpoints/CheckpointsPage';
 import { ResidentsPage } from '@/app/routes/residents/ResidentsPage';
 import { IncidentsPage } from '@/app/routes/incidents/IncidentsPage';
+import { ReportsPage } from '@/app/routes/reports/ReportsPage';
+import { ResidentReportPage } from '@/app/routes/public/ResidentReportPage';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
+import { initSync, flush } from '@/lib/offline/queue';
 
 const GisPage = lazy(() =>
   import('@/app/routes/gis/GisPage').then((m) => ({ default: m.GisPage })),
@@ -80,12 +83,21 @@ export default function App() {
     }
   }, [isAuthenticated, fetchMe]);
 
+  useEffect(() => {
+    initSync();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) void flush();
+  }, [isAuthenticated]);
+
   return (
     <ErrorBoundary>
       <Routes>
         <Route path="/landing" element={<LandingRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupRoute />} />
+        <Route path="/report" element={<ResidentReportPage />} />
 
         <Route
           element={
@@ -176,6 +188,14 @@ export default function App() {
             element={
               <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
                 <AuditPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <ReportsPage />
               </RequireRole>
             }
           />

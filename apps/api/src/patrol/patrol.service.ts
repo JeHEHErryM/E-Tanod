@@ -247,6 +247,44 @@ export class PatrolService {
     });
   }
 
+  /** Admin live view: active patrol sessions with last-seen freshness. */
+  async monitorActive(barangayScope?: string | null) {
+    const sessions = await this.prisma.patrolSession.findMany({
+      where: {
+        status: PatrolStatus.ACTIVE,
+        ...(barangayScope
+          ? { patrolAssignment: { patrolSchedule: { barangayId: barangayScope } } }
+          : {}),
+      },
+      include: {
+        tanod: { select: { id: true, fullName: true, username: true } },
+        locations: { orderBy: { recordedAt: 'desc' }, take: 1 },
+        patrolAssignment: {
+          select: { patrolSchedule: { select: { title: true, barangay: { select: { name: true } } } } },
+        },
+        _count: { select: { checkpointScans: true } },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    return sessions.map((s) => ({
+      id: s.id,
+      tanod: s.tanod,
+      startedAt: s.startedAt,
+      schedule: s.patrolAssignment.patrolSchedule.title,
+      barangay: s.patrolAssignment.patrolSchedule.barangay?.name ?? null,
+      lastSeenAt: s.locations[0]?.recordedAt ?? null,
+      lastLocation: s.locations[0]
+        ? {
+            latitude: s.locations[0].latitude,
+            longitude: s.locations[0].longitude,
+            accuracy: s.locations[0].accuracy,
+          }
+        : null,
+      checkpointScans: s._count.checkpointScans,
+    }));
+  }
+
   async startPatrol(dto: StartPatrolDto, tanodId: string) {
     const assignment = await this.prisma.patrolAssignment.findUnique({
       where: { id: dto.patrolAssignmentId },

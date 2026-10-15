@@ -75,6 +75,12 @@ export class PatrolController {
     return this.patrol.getMyActiveSession(actor.id);
   }
 
+  @Get('monitor')
+  @Permissions('patrol.monitor')
+  monitor(@CurrentUser() actor: AuthUser) {
+    return this.patrol.monitorActive(this.scopeFor(actor));
+  }
+
   @Post('start')
   @Permissions('patrol.start')
   start(@Body() dto: StartPatrolDto, @CurrentUser() actor: AuthUser) {

@@ -8,6 +8,7 @@
     "gis": "Mapa ng Insidente",
     "residents": "Aking Ulat",
     "incidents": "Insidente",
+    "reports": "Mga Ulat",
     "users": "Mga User",
     "barangays": "Mga Barangay",
     "audit": "Audit Logs"
@@ -136,6 +137,11 @@
     "endShort": "Tapusin",
     "adminActiveTitle": "Aktibong Session",
     "active": "AKTIBO",
+    "liveTitle": "Mga Aktibong Patrol",
+    "liveEmpty": "Walang aktibong patrol sa ngayon.",
+    "lastSeen": "Na-update {{ago}}",
+    "noSignal": "Wala pang signal",
+    "scansCount": "{{count}} scan",
     "allAssignments": "Lahat ng Assignment",
     "myAssignments": "Aking mga Assignment",
     "emptyTitle": "Wala pang assignment",
@@ -205,6 +211,8 @@
     "cameraClose": "Isara ang camera",
     "verify": "I-verify ang Checkpoint",
     "onlyTanod": "Tanging isang tanod na may aktibong patrol ang makakapag-verify ng checkpoint.",
+    "queuedTitle": "Naka-queue ang scan habang offline",
+    "queuedDesc": "Wala pang koneksyon ngayon — naka-save ang scan sa device na ito at awtomatikong mag-sync kapag bumalik ang koneksyon.",
     "scannedAt": "Na-scan noong {{time}}",
     "result": {
       "VALID": { "title": "Na-verify ang checkpoint", "desc": "Tumugma ang lokasyon sa loob ng radius ng geofence." },
@@ -215,6 +223,14 @@
       "OUTSIDE_RADIUS": { "title": "Sa labas ng geofence", "desc": "Masyado kang malayo sa checkpoint na ito upang i-verify." },
       "INVALID": { "title": "Di-wastong token", "desc": "Hindi ma-tugma ang QR token na ito sa isang checkpoint." }
     }
+  },
+  "sync": {
+    "offline": "Offline",
+    "syncing": "Nag-s-sync…",
+    "pending": "{{count}} nakapila",
+    "failed": "{{count}} bigo",
+    "syncNow": "I-sync ngayon ang mga nakapilang pagbabago",
+    "offlineBanner": "Offline ka. Naka-save ang mga pagbabago sa device na ito at awtomatikong mag-sync kapag bumalik ang koneksyon."
   },
   "incidents": {
     "title": "Insidente",
@@ -374,6 +390,47 @@
     "emptyDesc": "Itatala dito ang mga sensitibong aksyon sa seguridad.",
     "system": "sistema"
   },
+  "reports": {
+    "title": "Mga Ulat",
+    "desc": "Pagsunod sa patrol ng bawat tanod sa piniling panahon",
+    "downloadCsv": "I-export ang CSV",
+    "from": "Mula",
+    "to": "Hanggang",
+    "tanod": "Tanod",
+    "assigned": "Nakatalaga",
+    "completed": "Natapos",
+    "sessions": "Sesyon",
+    "validScans": "Wastong scan",
+    "compliance": "Pagsunod",
+    "emptyTitle": "Walang datos ng patrol",
+    "emptyDesc": "Walang nakatakdang patrol sa piniling panahon.",
+    "range": "Ipinapakita ang {{from}} – {{to}}"
+  },
+  "residentReport": {
+    "title": "Mag-ulat ng insidente",
+    "desc": "Magpadala ng ulat sa iyong barangay. Maaari kang manatiling anonymous at subaybayan ang kalagayan gamit ang code.",
+    "tab": {
+      "report": "Magpadala ng ulat",
+      "track": "Subaybayan ang ulat"
+    },
+    "backToLogin": "Bumalik sa pag-sign in",
+    "message": "Ano ang nangyari?",
+    "messagePlaceholder": "Ilarawan ang insidente, lokasyon, at iba pang detalye.",
+    "contact": "Kontak (opsyonal)",
+    "contactPlaceholder": "Telepono o email — iwanang blangko upang manatiling anonymous",
+    "useLocation": "Ilakip ang aking lokasyon",
+    "locationCaptured": "Nailakip ang lokasyon",
+    "submit": "Ipadala ang ulat",
+    "successTitle": "Naisumite ang ulat",
+    "successDesc": "Itago ang tracking code na ito upang tingnan ang kalagayan ng iyong ulat.",
+    "copyHint": "I-tap ang code upang kopyahin.",
+    "another": "Magpadala ng ibang ulat",
+    "trackingCode": "Tracking code",
+    "trackButton": "Tingnan ang kalagayan",
+    "notFound": "Walang nahanap na ulat para sa tracking code na iyon.",
+    "category": "Kategorya",
+    "reportedAt": "Iniulat noong"
+  },
   "error": {
     "title": "May naganap na error",
     "desc": "May hindi inaasahang error habang binubuo ang view na ito.",
@@ -386,6 +443,7 @@
     "ctaSignIn": "Mag-sign in",
     "ctaSignup": "Gumawa ng account",
     "ctaFeatures": "Tingnan ang mga feature",
+    "ctaReport": "Mag-ulat ng insidente",
     "featuresTitle": "Lahat ng kailangan ng iyong barangay",
     "featuresDesc": "Idinisenyo para sa mga tanod at opisyal ng barangay, pinapanatili ng E-Tanod na accountable ang mga patrol at nakikita ang mga insidente sa real time.",
     "feat": {

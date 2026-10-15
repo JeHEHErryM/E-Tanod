@@ -5,6 +5,7 @@ import {
   Mail,
   ArrowDown,
   CheckCircle2,
+  Siren,
 } from 'lucide-react';
 import { BrandWordmark } from '@/app/components/AppLogo';
 import { LanguageToggle } from '@/i18n/LanguageToggle';
@@ -54,6 +55,12 @@ export function LandingPage() {
       <footer className="border-t border-ink-100/70 py-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 text-center md:px-6">
           <p className="text-sm font-semibold text-ink-600">{t('landing.footerTag')}</p>
+          <button
+            onClick={() => navigate('/report')}
+            className="text-sm font-bold text-brand-700 hover:text-brand-800"
+          >
+            {t('landing.ctaReport')}
+          </button>
           <p className="text-xs text-ink-400">{t('landing.demoHint')}</p>
         </div>
       </footer>
@@ -92,6 +99,13 @@ function Hero({ onFeatures }: { onFeatures: () => void }) {
           >
             {t('landing.ctaFeatures')}
             <ArrowDown className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => navigate('/report')}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 text-sm font-bold text-white transition-colors hover:bg-white/20"
+          >
+            <Siren className="h-4 w-4" />
+            {t('landing.ctaReport')}
           </button>
         </div>
       </div>

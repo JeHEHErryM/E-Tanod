@@ -30,10 +30,13 @@ Expected web routes per role (`RequireRole` gates):
 | `/checkpoints` | ✅ | ✅ | — | — |
 | `/gis` | ✅ | ✅ | — | — |
 | `/incidents` | ✅ | ✅ | ✅ | — |
+| `/reports` | ✅ | ✅ | — | — |
 | `/users` | ✅ | ✅ | — | — |
 | `/barangays` | ✅ | — | — | — |
 | `/audit` | ✅ | ✅ | — | — |
 | `/residents` | — | — | — | ✅ |
+
+Public (no auth): `/landing`, `/login`, `/signup`, `/report` (resident report + tracking).
 
 - [ ] Each role sees only its allowed navigation items.
 - [ ] Manually visiting a disallowed route redirects home (no crash).
@@ -80,6 +83,16 @@ Expected web routes per role (`RequireRole` gates):
 **Audit (super admin / barangay admin)**
 - [ ] Audit entries appear in reverse-chronological order and are not editable.
 
+**Reports (super admin / barangay admin)**
+- [ ] `/reports` lists per-tanod patrol compliance for the selected date range.
+- [ ] Changing From/To refetches and updates the summary tiles and table.
+- [ ] "Export CSV" downloads a file with the same rows.
+
+**Public resident reporting (no login)**
+- [ ] `/report` submits a report (with or without contact) and shows a tracking code.
+- [ ] The tracking-code tab returns the report status and category.
+- [ ] `/report` is reachable from the landing page (hero CTA + footer link).
+
 ---
 
 ## 4. Dark Mode
@@ -124,8 +137,18 @@ Toggle theme via the header control on each page; verify no invisible text.
 - [ ] Dashboard/Not-found/audit error states render the ErrorBoundary gracefully
       ("Your data is safe") rather than a blank screen.
 - [ ] Slow/absent network shows loading and error states, not infinite spinners.
-- [ ] Offline scan queues and syncs on reconnect (no silent data loss).
 - [ ] No unhandled console errors during a full click-through.
+
+### Offline & Sync
+
+- [ ] With the network off, the app shell still loads (service worker cache).
+- [ ] Going offline shows the header **offline banner** and a **sync pill**; both clear on reconnect.
+- [ ] An offline checkpoint scan and incident report are **queued** (shown as pending)
+      rather than lost or throwing an error.
+- [ ] The offline/online indicator reflects `navigator.onLine` and reconnects.
+- [ ] On reconnect the queue flushes automatically; pending items become synced.
+- [ ] A failed replay stays visible as **failed** (not silently dropped) and can be retried.
+- [ ] Duplicate scans are still prevented after a replay (server unique constraint).
 
 ---
 

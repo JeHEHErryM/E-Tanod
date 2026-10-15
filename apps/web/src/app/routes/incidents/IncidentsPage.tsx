@@ -12,6 +12,7 @@ import { StatusLabel, incidentStatusTone, incidentSeverityTone } from '@/app/com
 import { PageHeader } from '@/app/components/PageHeader';
 import { formatDateTime } from '@/app/lib/format';
 import { uploadUrl, attachmentThumb } from '@/lib/config';
+import { enqueue, isNetworkError, isOffline } from '@/lib/offline/queue';
 
 interface IncidentCategory {
   id: string;
@@ -266,7 +267,7 @@ function ReportSheet({
   const [error, setError] = useState<string | null>(null);
 
   const create = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<{ queued: boolean }> => {
       let lat: number | undefined;
       let lng: number | undefined;
       if (coords.trim()) {
@@ -278,7 +279,21 @@ function ReportSheet({
           throw new Error(t('incidents.coordsError'));
         }
       }
-      return (await api.post('/incidents', { categoryId, description, latitude: lat, longitude: lng })).data;
+      const payload = { categoryId, description, latitude: lat, longitude: lng };
+      if (isOffline()) {
+        await enqueue({ entityType: 'INCIDENT', payload });
+        return { queued: true };
+      }
+      try {
+        await api.post('/incidents', payload);
+        return { queued: false };
+      } catch (error) {
+        if (isNetworkError(error)) {
+          await enqueue({ entityType: 'INCIDENT', payload });
+          return { queued: true };
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       onClose();

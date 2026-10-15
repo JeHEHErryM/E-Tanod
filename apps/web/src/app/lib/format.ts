@@ -39,3 +39,17 @@ export function formatTime(value: unknown, locale = 'en'): string {
     minute: '2-digit',
   }).format(d);
 }
+
+/** Compact "time ago" label (e.g. "just now", "42s ago", "3m ago"). */
+export function timeAgo(value: unknown, now = Date.now()): string | null {
+  const d = toSafeDate(value);
+  if (!d) return null;
+  const seconds = Math.max(0, Math.round((now - d.getTime()) / 1000));
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}

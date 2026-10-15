@@ -31,10 +31,13 @@ oversight → GIS analytics. Roughly 8–12 minutes.
 
 1. Open `https://e-tanod.vercel.app` → the landing page (hero, features, install steps,
    contact). Point out: **PWA, bilingual EN/TL, no app store required.**
-2. Tap **Create account** and register a so-called resident account (or log in as
+2. Visit **`/report`** (public, no login required) from the hero CTA. Submit a report with
+   an optional contact and attach your location — you get an **`ET-XXXXXXXX` tracking
+   code**. Switch to the **Track report** tab, paste the code, and show the status.
+3. Tap **Create account** and register a so-called resident account (or log in as
    `resident1`). Note that **sign-ups require admin approval** — a verification step
    that keeps the system trustworthy.
-3. As the resident (`/residents`): show the dashboard, submit an incident report
+4. As the resident (`/residents`): show the dashboard, submit an incident report
    (category, description, optional photo, geo-tag), and the **"track my reports"** list.
 
 > Talking point: reporting is a one-tap, phone-based channel — no need to walk to the
@@ -75,7 +78,9 @@ Log in as `barangayadmin`.
    token (the QR encodes only a non-sensitive token).
 5. **Incidents** (`/incidents`): review, verify, and change the status of reported
    incidents.
-6. **Audit** (`/audit`): show the append-only audit trail (login, approvals, changes).
+6. **Reports** (`/reports`): pick a date range and show **per-tanod patrol compliance**
+   (assigned vs. completed, valid scans, compliance rate); export it to **CSV**.
+7. **Audit** (`/audit`): show the append-only audit trail (login, approvals, changes).
 
 > Talking point: **RBAC is enforced on the backend** — the UI only reflects what a role
 > may do. Everything sensitive is logged.
@@ -106,9 +111,22 @@ Log in as `superadmin`.
 
 ## 7. Offline-first & real-time (closing points)
 
-- Turn off the network on the tanod device, perform a checkpoint scan, then reconnect →
-  the record **syncs** (never silently dropped).
-- Open the admin dashboard while a tanod acts → **real-time** updates via Socket.IO.
+- **What is offline:** the PWA service worker caches the app shell so it opens with no
+  network. Field writes (checkpoint scans, incident reports, patrol locations) are
+  **queued on-device in IndexedDB**; the header shows an **offline banner** plus a live
+  **sync pill** (`pending` / `syncing` / `failed`) and an offline scan shows a
+  "queued — will sync automatically" confirmation.
+- **What is replicated:** turn off the network on the tanod device, perform a checkpoint
+  scan and submit a report, then reconnect → the queue **flushes automatically** (also on
+  a 30s timer and on tab focus) as a **batched `POST /sync`**. Each record carries a
+  client-generated idempotency key, so replay is safe and records are never silently
+  dropped.
+- Open the admin dashboard while a tanod acts → **real-time** updates via Socket.IO, plus a
+  **last-seen** freshness indicator on the Live Patrols list (`GET /patrol/monitor`,
+  refreshed every 15s).
+- **Not yet implemented:** automatic conflict *resolution* for edits made in two places
+  while offline. Records that the server rejects on replay are marked **FAILED** (retried
+  on the next flush) rather than merged.
 
 > Closing: E-Tanod is **decision-support** — the system advises, barangay officials
 > decide. Aligned with **SDG 11.7** and **SDG 16.1**.

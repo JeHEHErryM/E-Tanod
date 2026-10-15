@@ -14,6 +14,9 @@ import { PatrolModule } from './patrol/patrol.module';
 import { CheckpointModule } from './checkpoint/checkpoint.module';
 import { IncidentModule } from './incident/incident.module';
 import { GisModule } from './gis/gis.module';
+import { SyncModule } from './sync/sync.module';
+import { ReportsModule } from './reports/reports.module';
+import { ResidentReportModule } from './resident-report/resident-report.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { GisModule } from './gis/gis.module';
     CheckpointModule,
     IncidentModule,
     GisModule,
+    SyncModule,
+    ReportsModule,
+    ResidentReportModule,
   ],
   providers: [
     {
