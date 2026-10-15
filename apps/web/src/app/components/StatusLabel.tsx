@@ -25,12 +25,12 @@ const dotColors: Record<Tone, string> = {
 
 const labelColors: Record<Tone, string> = {
   default: 'text-ink-500',
-  success: 'text-emerald-700',
-  warning: 'text-amber-700',
-  danger: 'text-rose-700',
-  info: 'text-sky-700',
-  brand: 'text-brand-700',
-  muted: 'text-ink-400',
+  success: 'text-emerald-700 dark:text-emerald-400',
+  warning: 'text-amber-700 dark:text-amber-300',
+  danger: 'text-rose-700 dark:text-rose-400',
+  info: 'text-sky-700 dark:text-sky-300',
+  brand: 'text-brand-700 dark:text-brand-300',
+  muted: 'text-ink-400 dark:text-ink-300',
 };
 
 export function StatusLabel({

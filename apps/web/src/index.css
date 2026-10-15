@@ -188,9 +188,8 @@
   .dark .bg-sky-50 {
     background-color: rgb(14 165 233 / 0.16);
   }
-  .dark .bg-sky-100 {
-    background-color: rgb(14 165 233 / 0.22);
-  }
+  .dark .bg-brand-50 { background-color: rgb(26 188 156 / 0.16); }
+  .dark .bg-brand-100 { background-color: rgb(26 188 156 / 0.22); }
   .dark .bg-sand-50 {
     background-color: rgb(var(--sand-50) / 1);
   }
