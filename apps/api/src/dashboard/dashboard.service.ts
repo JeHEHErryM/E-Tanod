@@ -28,6 +28,7 @@ export class DashboardService {
     };
     const scanWhere: Prisma.CheckpointScanWhereInput = {
       result: { in: ['OUTSIDE_RADIUS', 'INVALID'] },
+      scannedAt: { gte: startOfDay },
       ...(barangayId ? { checkpoint: { is: { barangayId } } } : {}),
     };
 

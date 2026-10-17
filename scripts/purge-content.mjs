@@ -2,7 +2,8 @@
  * Purge synthetic/operational content from the deployed E-Tanod environment
  * while KEEPING barangays, accounts, roles and incident categories.
  *
- * Deletes: incidents, checkpoints, patrol schedules, resident reports.
+ * Deletes: incidents, checkpoints, patrol schedules, resident reports,
+ * and orphaned checkpoint scans.
  * Uses the authenticated REST API only (no DB access needed).
  *
  * Reads credentials from env:
@@ -76,6 +77,10 @@ async function main() {
   total += await purgeAll(auth, 'resident reports', '/resident-reports', (id) => `/resident-reports/${id}`);
   total += await purgeAll(auth, 'patrol schedules', '/patrol/schedules', (id) => `/patrol/schedules/${id}`);
   total += await purgeAll(auth, 'checkpoints', '/checkpoints', (id) => `/checkpoints/${id}`);
+
+  const scans = await req('/maintenance/checkpoint-scans', { method: 'DELETE', headers: auth });
+  console.log(`  checkpoint scans: deleted ${scans.deleted}`);
+  total += scans.deleted ?? 0;
 
   console.log(`Purge complete. ${total} records removed. Barangays and accounts retained.`);
 }

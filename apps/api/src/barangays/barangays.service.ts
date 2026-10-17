@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateBarangayDto, UpdateBarangayDto } from './dto/barangay.dto';
@@ -38,5 +38,19 @@ export class BarangaysService {
     const barangay = await this.prisma.barangay.update({ where: { id }, data: dto });
     await this.audit.log(actorId, 'ADMIN_ACTION', 'barangay', id, { name: barangay.name });
     return barangay;
+  }
+
+  async remove(id: string, actorId: string) {
+    const barangay = await this.findOne(id);
+    const blockers =
+      barangay._count.checkpoints + barangay._count.incidents + barangay._count.patrolSchedules;
+    if (blockers > 0) {
+      throw new BadRequestException(
+        'Cannot delete barangay with existing checkpoints, incidents or patrol schedules. Remove those first.',
+      );
+    }
+    await this.prisma.barangay.delete({ where: { id } });
+    await this.audit.log(actorId, 'ADMIN_ACTION', 'barangay.delete', id, { name: barangay.name });
+    return { deleted: true };
   }
 }

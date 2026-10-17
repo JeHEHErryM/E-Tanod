@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { BarangaysService } from './barangays.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions, Public } from '../common/decorators/roles.decorator';
@@ -31,5 +31,11 @@ export class BarangaysController {
   @Permissions('barangay.manage')
   update(@Param('id') id: string, @Body() dto: UpdateBarangayDto, @CurrentUser() actor: AuthUser) {
     return this.barangays.update(id, dto, actor.id);
+  }
+
+  @Delete(':id')
+  @Permissions('barangay.manage')
+  remove(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
+    return this.barangays.remove(id, actor.id);
   }
 }

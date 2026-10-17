@@ -17,6 +17,7 @@ import { GisModule } from './gis/gis.module';
 import { SyncModule } from './sync/sync.module';
 import { ReportsModule } from './reports/reports.module';
 import { ResidentReportModule } from './resident-report/resident-report.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ResidentReportModule } from './resident-report/resident-report.module';
     SyncModule,
     ReportsModule,
     ResidentReportModule,
+    MaintenanceModule,
   ],
   providers: [
     {
