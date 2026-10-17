@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IncidentStatus } from '@prisma/client';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateResidentReportDto {
   @IsOptional()
@@ -34,4 +35,14 @@ export class CreateResidentReportDto {
   @IsString()
   @MaxLength(2000)
   message?: string;
+}
+
+export class UpdateResidentReportStatusDto {
+  @IsEnum(IncidentStatus)
+  status!: IncidentStatus;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
 }

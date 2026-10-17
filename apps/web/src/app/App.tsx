@@ -16,9 +16,11 @@ import { ScanPage } from '@/app/routes/scan/ScanPage';
 import { CheckpointsPage } from '@/app/routes/checkpoints/CheckpointsPage';
 import { ResidentsPage } from '@/app/routes/residents/ResidentsPage';
 import { IncidentsPage } from '@/app/routes/incidents/IncidentsPage';
+import { ResidentReportsPage } from '@/app/routes/resident-reports/ResidentReportsPage';
 import { ReportsPage } from '@/app/routes/reports/ReportsPage';
 import { ResidentReportPage } from '@/app/routes/public/ResidentReportPage';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
+import { useRealtime } from '@/app/hooks/useRealtime';
 import { initSync, flush } from '@/lib/offline/queue';
 
 const GisPage = lazy(() =>
@@ -76,6 +78,8 @@ function RoleHome() {
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const fetchMe = useAuthStore((s) => s.fetchMe);
+
+  useRealtime();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -167,6 +171,14 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/resident-reports"
+            element={
+              <RequireRole roles={['SUPER_ADMIN', 'BARANGAY_ADMIN']}>
+                <ResidentReportsPage />
+              </RequireRole>
+            }
+          />
           <Route
             path="/users"
             element={

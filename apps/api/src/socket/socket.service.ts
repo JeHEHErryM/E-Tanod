@@ -15,6 +15,14 @@ export class SocketService {
     this.server?.to(`user:${userId}`).emit(event, payload);
   }
 
+  emitToBarangay(barangayId: string, event: string, payload: EventPayload) {
+    this.server?.to(`barangay:${barangayId}`).emit(event, payload);
+  }
+
+  emitToRole(role: string, event: string, payload: EventPayload) {
+    this.server?.to(`role:${role}`).emit(event, payload);
+  }
+
   emitToRoom(room: string, event: string, payload: EventPayload) {
     this.server?.to(room).emit(event, payload);
   }

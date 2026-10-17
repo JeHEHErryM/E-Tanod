@@ -10,6 +10,7 @@ export interface JwtPayload {
   username: string;
   roles: string[];
   primaryRole: string;
+  barangayId?: string | null;
 }
 
 @Injectable()
@@ -35,6 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) throw new UnauthorizedException('User not found');
+    if (!user.isVerified) throw new UnauthorizedException('Account is pending approval');
     if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
 
     const roles = user.roles.map((r) => r.role.name);

@@ -8,6 +8,7 @@
     "gis": "Mapa ng Insidente",
     "residents": "Aking Ulat",
     "incidents": "Insidente",
+    "residentReports": "Ulat ng Residente",
     "reports": "Mga Ulat",
     "users": "Mga User",
     "barangays": "Mga Barangay",
@@ -389,6 +390,20 @@
     "emptyTitle": "Walang audit entry",
     "emptyDesc": "Itatala dito ang mga sensitibong aksyon sa seguridad.",
     "system": "sistema"
+  },
+  "common": {
+    "cancel": "Kanselahin"
+  },
+  "residentReports": {
+    "title": "Ulat ng residente",
+    "desc": "Suriin at aksyunan ang mga ulat ng insidente mula sa komunidad",
+    "emptyTitle": "Walang ulat ng residente",
+    "emptyDesc": "Lalabas dito ang mga ulat ng insidente mula sa komunidad para sa pagsusuri.",
+    "noMessage": "(walang mensahe)",
+    "anonymous": "Hindi nagpapakilala",
+    "noContact": "Walang kontak",
+    "delete": "Burahin",
+    "confirmDelete": "Kumpirmahin ang pagbura"
   },
   "reports": {
     "title": "Mga Ulat",

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -92,5 +93,16 @@ export class IncidentController {
     @CurrentUser() actor: AuthUser,
   ) {
     return this.incidents.updateStatus(id, dto, actor);
+  }
+
+  @Delete(':id')
+  @Permissions('incident.review')
+  remove(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
+    return this.incidents.remove(id, {
+      id: actor.id,
+      username: actor.username,
+      primaryRole: actor.primaryRole,
+      barangayId: actor.barangayId,
+    });
   }
 }

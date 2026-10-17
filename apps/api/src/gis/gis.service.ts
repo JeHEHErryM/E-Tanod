@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IncidentSeverity, IncidentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/auth-user.interface';
 import { GisQueryDto } from './dto/gis.dto';
 
 const SEVERITY_WEIGHT: Record<IncidentSeverity, number> = {
@@ -14,12 +15,17 @@ const SEVERITY_WEIGHT: Record<IncidentSeverity, number> = {
 export class GisService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private buildWhere(query: GisQueryDto): Prisma.IncidentWhereInput {
+  private buildWhere(query: GisQueryDto, actor?: AuthUser): Prisma.IncidentWhereInput {
     const where: Prisma.IncidentWhereInput = {
       latitude: { not: null },
       longitude: { not: null },
     };
-    if (query.barangayId) where.barangayId = query.barangayId;
+    // Non-super-admins are always confined to their own barangay.
+    if (actor && actor.primaryRole !== 'SUPER_ADMIN') {
+      where.barangayId = actor.barangayId ?? '__none__';
+    } else if (query.barangayId) {
+      where.barangayId = query.barangayId;
+    }
     if (query.status) {
       const statuses = query.status
         .split(',')
@@ -37,8 +43,8 @@ export class GisService {
   }
 
   /** Weighted points for a Mapbox heatmap layer. */
-  async heatmap(query: GisQueryDto) {
-    const where = this.buildWhere(query);
+  async heatmap(query: GisQueryDto, actor?: AuthUser) {
+    const where = this.buildWhere(query, actor);
     const data = await this.prisma.incident.findMany({
       where,
       select: {
@@ -66,8 +72,8 @@ export class GisService {
   }
 
   /** Incident markers for the map. */
-  async incidents(query: GisQueryDto) {
-    const where = this.buildWhere(query);
+  async incidents(query: GisQueryDto, actor?: AuthUser) {
+    const where = this.buildWhere(query, actor);
     const data = await this.prisma.incident.findMany({
       where,
       select: {

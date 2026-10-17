@@ -8,6 +8,7 @@
     "gis": "Incident Map",
     "residents": "My Reports",
     "incidents": "Incidents",
+    "residentReports": "Resident Reports",
     "reports": "Reports",
     "users": "Users",
     "barangays": "Barangays",
@@ -389,6 +390,20 @@
     "emptyTitle": "No audit entries",
     "emptyDesc": "Security-sensitive actions will be logged here.",
     "system": "system"
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
+  "residentReports": {
+    "title": "Resident reports",
+    "desc": "Review and act on incident reports submitted by the community",
+    "emptyTitle": "No resident reports",
+    "emptyDesc": "Community incident reports will appear here for review.",
+    "noMessage": "(no message provided)",
+    "anonymous": "Anonymous",
+    "noContact": "No contact",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete"
   },
   "reports": {
     "title": "Reports",

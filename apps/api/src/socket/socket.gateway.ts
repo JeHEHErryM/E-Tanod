@@ -53,10 +53,18 @@ export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
       const secret =
         this.config.get<string>('JWT_ACCESS_SECRET') ?? 'dev-access-secret';
-      const payload = this.jwt.verify<{ sub: string }>(token, { secret });
+      const payload = this.jwt.verify<{
+        sub: string;
+        primaryRole?: string;
+        barangayId?: string | null;
+      }>(token, { secret });
       const userId = payload.sub;
       client.data.userId = userId;
       await client.join(`user:${userId}`);
+      if (payload.barangayId) {
+        await client.join(`barangay:${payload.barangayId}`);
+      }
+      await client.join(`role:${payload.primaryRole ?? 'RESIDENT'}`);
       this.logger.log(`Socket connected: user ${userId}`);
     } catch {
       client.disconnect(true);

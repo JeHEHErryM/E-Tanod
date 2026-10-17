@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/auth-user.interface';
 
 @Injectable()
 export class AuditService {
@@ -28,10 +29,17 @@ export class AuditService {
     });
   }
 
-  async findAll(params: { actorId?: string; action?: string; page: number; pageSize: number }) {
-    const where: Record<string, unknown> = {};
+  async findAll(
+    params: { actorId?: string; action?: string; page: number; pageSize: number },
+    actor?: AuthUser,
+  ) {
+    const where: Prisma.AuditLogWhereInput = {};
     if (params.actorId) where.actorId = params.actorId;
     if (params.action) where.action = params.action;
+    // Barangay admins only see activity from users in their own barangay.
+    if (actor && actor.primaryRole !== 'SUPER_ADMIN') {
+      where.actor = { is: { barangayId: actor.barangayId ?? '__none__' } };
+    }
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({

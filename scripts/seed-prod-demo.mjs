@@ -1,5 +1,10 @@
 /**
- * Idempotent demo-data seed for the deployed E-Tanod environment.
+ * Idempotent BASE seed for the deployed E-Tanod environment.
+ *
+ * Provisions only the essentials the system needs to operate: the Mamburao
+ * barangays and the demo accounts. It intentionally creates NO synthetic
+ * operational data (checkpoints, patrol schedules, incidents) so the deployed
+ * system runs on real data entered through the app.
  *
  * Uses the public/authenticated REST API only (no DB access needed).
  * Reads credentials from env so no secrets are committed:
@@ -94,7 +99,6 @@ async function main() {
     { username: 'tanod2', fullName: 'Tanod Miguel De Guzman', role: 'TANOD', barangay: 'TAYAM' },
     { username: 'resident1', fullName: 'Maria Clara', role: 'RESIDENT', barangay: 'BALAN' },
   ];
-  const createdById = {};
   for (const a of accounts) {
     const existing = listOf(await req(`/users?search=${encodeURIComponent(a.username)}&pageSize=50`, { headers: auth }));
     let user = existing.find((u) => u.username === a.username);
@@ -121,111 +125,15 @@ async function main() {
           barangayId: barangay.id,
         }),
       });
-      user = await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
+      await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
       console.log('  created account', a.username);
     } else {
-      user = await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
+      await req(`/users/${user.id}`, { method: 'PATCH', headers: auth, body: JSON.stringify(patch) });
       console.log('  reset demo account', a.username);
     }
-    createdById[a.username] = user.id;
   }
 
-  // --- Checkpoints ---
-  const existingC = listOf(await req('/checkpoints?pageSize=100', { headers: auth }));
-  const cpByCode = new Map(existingC.map((c) => [c.code, c]));
-  const checkpointDefs = [
-    { code: 'CP-001', name: 'Barangay Hall', barangay: 'PAYOM', lat: CENTER_LAT + 0.0012, lng: CENTER_LNG + 0.0023, radius: 40 },
-    { code: 'CP-002', name: 'Port Tayamaan', barangay: 'TAYAM', lat: CENTER_LAT, lng: CENTER_LNG + 0.0072, radius: 60 },
-    { code: 'CP-003', name: 'Poblacion Market Gate', barangay: 'POB02', lat: CENTER_LAT + 0.0007, lng: CENTER_LNG + 0.0001, radius: 30 },
-  ];
-  for (const c of checkpointDefs) {
-    let checkpoint = cpByCode.get(c.code);
-    if (!checkpoint) {
-      const barangay = [...bById.values()].find((b) => b.code === c.barangay);
-      checkpoint = await req('/checkpoints', {
-        method: 'POST',
-        headers: auth,
-        body: JSON.stringify({
-          code: c.code,
-          name: c.name,
-          description: 'DEMO checkpoint for the defense demo.',
-          latitude: c.lat,
-          longitude: c.lng,
-          radiusMeters: c.radius,
-          barangayId: barangay.id,
-        }),
-      });
-      cpByCode.set(c.code, checkpoint);
-      console.log('  created checkpoint', c.code);
-    }
-    await req(`/checkpoints/${checkpoint.id}/qr/regenerate`, {
-      method: 'POST',
-      headers: auth,
-      body: JSON.stringify({}),
-    });
-    console.log('  refreshed checkpoint QR', c.code);
-  }
-
-  // --- Incidents (geo data for map + heatmap) ---
-  const existingI = listOf(await req('/incidents?pageSize=100', { headers: auth }));
-  const haveDesc = new Set(existingI.map((i) => i.description.trim().toLowerCase()));
-
-  const categories = listOf(await req('/incidents/categories', { headers: auth }));
-  const cat = (code) => categories.find((c) => c.code === code)?.id;
-
-  // login as resident for RESIDENT-sourced reports
-  let residentAuth = auth;
-  try {
-    const r = await req('/auth/login', { method: 'POST', body: JSON.stringify({ username: 'resident1', password: DEMO_PASS }) });
-    residentAuth = { Authorization: `Bearer ${r.accessToken}` };
-  } catch {
-    /* fall back to superadmin */
-  }
-
-  const samples = [
-    { code: 'THEFT', desc: 'Reported a snatching attempt near the public market.', b: 'PAYOM', dLat: -0.002, dLng: 0.001, anon: false, viaResident: false },
-    { code: 'NOISE', desc: 'Loud videoke sound after 11pm.', b: 'POB02', dLat: 0.0005, dLng: -0.0002, anon: true, viaResident: false },
-    { code: 'EMERGENCY', desc: 'Possible gas leak near the port area.', b: 'TAYAM', dLat: -0.0015, dLng: 0.006, anon: false, viaResident: false },
-    { code: 'ASSAULT', desc: 'Minor altercation outside a sari-sari store.', b: 'POB05', dLat: -0.001, dLng: -0.002, anon: true, viaResident: false },
-    { code: 'SUSPICIOUS', desc: 'Unattended vehicle circling the barangay hall at night.', b: 'BALAN', dLat: 0.003, dLng: -0.002, anon: false, viaResident: false },
-    { code: 'TRAFFIC', desc: 'Road accident at the highway junction, no injuries.', b: 'FATII', dLat: -0.005, dLng: 0.003, anon: false, viaResident: true },
-    { code: 'THEFT', desc: 'Lost motorbike reported missing from the parking area.', b: 'TALAB', dLat: -0.009, dLng: -0.003, anon: false, viaResident: false },
-    { code: 'EMERGENCY', desc: 'Fire alarm near the school grounds.', b: 'POB07', dLat: 0.0006, dLng: -0.0004, anon: false, viaResident: true },
-    { code: 'NOISE', desc: 'Continuous barking / stray dogs at the residential area.', b: 'TANGK', dLat: -0.006, dLng: -0.006, anon: true, viaResident: false },
-    { code: 'ASSAULT', desc: 'Report of a fight during the fiesta gathering.', b: 'POB01', dLat: 0.0, dLng: 0.0, anon: false, viaResident: false },
-    { code: 'TRAFFIC', desc: 'Tricycle collision near the plaza.', b: 'POB03', dLat: -0.0003, dLng: -0.0001, anon: false, viaResident: false },
-    { code: 'SUSPICIOUS', desc: 'Loitering near the waterfront at dusk.', b: 'TAYAM', dLat: 0.001, dLng: 0.008, anon: true, viaResident: true },
-  ];
-  let createdIncidents = 0;
-  for (const s of samples) {
-    if (haveDesc.has(s.desc.trim().toLowerCase())) continue;
-    const id = cat(s.code);
-    if (!id) {
-      console.log('  !! category missing for', s.code);
-      continue;
-    }
-    for (const br of bById.values()) {
-      if (br.code === s.b) {
-        await req('/incidents', {
-          method: 'POST',
-          headers: s.viaResident ? residentAuth : auth,
-          body: JSON.stringify({
-            categoryId: id,
-            description: s.desc,
-            latitude: CENTER_LAT + s.dLat,
-            longitude: CENTER_LNG + s.dLng,
-            barangayId: br.id,
-            isAnonymous: s.anon,
-          }),
-        });
-        createdIncidents += 1;
-        break;
-      }
-    }
-  }
-  console.log(`  incidents created: ${createdIncidents} (existing: ${existingI.length})`);
-
-  console.log('Seed complete.');
+  console.log('Base seed complete.');
   console.log(`Demo accounts (password: ${DEMO_PASS}): barangayadmin, tanod1, tanod2, resident1`);
 }
 

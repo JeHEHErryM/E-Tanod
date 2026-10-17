@@ -23,7 +23,8 @@ export class ReportsService {
 
   private resolveScope(actor: AuthUser, requested?: string): string | null {
     if (actor.primaryRole === 'SUPER_ADMIN') return requested ?? null;
-    return actor.barangayId ?? null;
+    // A non-super-admin without a barangay must never see global data.
+    return actor.barangayId ?? '__none__';
   }
 
   private range(query: PatrolComplianceQueryDto) {

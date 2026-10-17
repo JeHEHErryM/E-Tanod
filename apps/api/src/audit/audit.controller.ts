@@ -1,5 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Permissions } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthUser } from '../auth/auth-user.interface';
 import { AuditService } from './audit.service';
 
 @Controller('audit')
@@ -9,16 +11,20 @@ export class AuditController {
   @Get()
   @Permissions('audit.view')
   async findAll(
+    @CurrentUser() actor: AuthUser,
     @Query('actorId') actorId?: string,
     @Query('action') action?: string,
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '20',
   ) {
-    return this.audit.findAll({
-      actorId,
-      action,
-      page: parseInt(page, 10) || 1,
-      pageSize: Math.min(parseInt(pageSize, 10) || 20, 100),
-    });
+    return this.audit.findAll(
+      {
+        actorId,
+        action,
+        page: parseInt(page, 10) || 1,
+        pageSize: Math.min(parseInt(pageSize, 10) || 20, 100),
+      },
+      actor,
+    );
   }
 }

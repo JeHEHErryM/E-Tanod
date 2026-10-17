@@ -209,6 +209,25 @@ export class PatrolService {
     return updated;
   }
 
+  async deleteSchedule(id: string, actorId: string, barangayScope?: string | null) {
+    const existing = await this.prisma.patrolSchedule.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Patrol schedule not found');
+    if (barangayScope && existing.barangayId !== barangayScope) {
+      throw new ForbiddenException('Schedule is outside your barangay');
+    }
+
+    await this.prisma.patrolSchedule.delete({ where: { id } });
+    await this.audit.log(actorId, 'PATROL_DELETED', 'PatrolSchedule', id, {
+      title: existing.title,
+    });
+
+    const payload = { scheduleId: id, title: existing.title };
+    this.socket.emitToBarangay(existing.barangayId, 'patrol.deleted', payload);
+    this.socket.emitToRole('SUPER_ADMIN', 'patrol.deleted', payload);
+
+    return { success: true };
+  }
+
   async getMyAssignments(tanodId: string) {
     return this.prisma.patrolAssignment.findMany({
       where: { tanodId },
@@ -322,12 +341,20 @@ export class PatrolService {
     });
 
     await this.audit.log(tanodId, 'PATROL_STARTED', 'PatrolSession', session.id);
-    this.socket.emitPublic('patrol.started', {
+    const startedPayload = {
       sessionId: session.id,
       tanodId,
       scheduleId: assignment.patrolSchedule.id,
       title: assignment.patrolSchedule.title,
-    });
+    };
+    if (assignment.patrolSchedule.barangayId) {
+      this.socket.emitToBarangay(
+        assignment.patrolSchedule.barangayId,
+        'patrol.started',
+        startedPayload,
+      );
+    }
+    this.socket.emitToRole('SUPER_ADMIN', 'patrol.started', startedPayload);
 
     return session;
   }
@@ -377,12 +404,20 @@ export class PatrolService {
     });
 
     await this.audit.log(tanodId, 'PATROL_COMPLETED', 'PatrolSession', sessionId);
-    this.socket.emitPublic('patrol.ended', {
+    const endedPayload = {
       sessionId,
       tanodId,
       scheduleId: session.patrolAssignment.patrolSchedule.id,
       status: completed,
-    });
+    };
+    if (session.patrolAssignment.patrolSchedule.barangayId) {
+      this.socket.emitToBarangay(
+        session.patrolAssignment.patrolSchedule.barangayId,
+        'patrol.ended',
+        endedPayload,
+      );
+    }
+    this.socket.emitToRole('SUPER_ADMIN', 'patrol.ended', endedPayload);
 
     return { session: updated };
   }

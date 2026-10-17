@@ -22,6 +22,7 @@ export type Permission =
   | 'reports.view'
   | 'resident.report'
   | 'resident.track'
+  | 'resident.manage'
   | 'sync.write'
   | 'sync.read'
   | 'audit.view'
@@ -50,6 +51,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'reports.view',
     'resident.report',
     'resident.track',
+    'resident.manage',
     'sync.write',
     'sync.read',
     'audit.view',
@@ -71,6 +73,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'gis.view',
     'reports.view',
     'resident.track',
+    'resident.manage',
     'sync.write',
     'sync.read',
     'audit.view',

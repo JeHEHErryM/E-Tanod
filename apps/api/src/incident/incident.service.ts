@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import sharp from 'sharp';
 import { IncidentStatus, Prisma, type Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -192,12 +192,16 @@ export class IncidentService implements OnModuleInit {
     });
 
     await this.audit.log(reporter.id, 'INCIDENT_CREATED', 'Incident', incident.id, { code });
-    this.socket.emitPublic('incident.created', {
+    const createdPayload = {
       incidentId: incident.id,
       code: incident.code,
       category: incident.category.name,
       severity: incident.severity,
-    });
+    };
+    if (incident.barangayId) {
+      this.socket.emitToBarangay(incident.barangayId, 'incident.created', createdPayload);
+    }
+    this.socket.emitToRole('SUPER_ADMIN', 'incident.created', createdPayload);
 
     return incident;
   }
@@ -356,21 +360,69 @@ export class IncidentService implements OnModuleInit {
 
     await this.audit.log(actor.id, 'INCIDENT_UPDATED', 'Incident', id, { status: dto.status });
 
+    const statusPayload = {
+      incidentId: id,
+      code: incident.code,
+      status: dto.status,
+    };
+
     // Notify the reporter of the status change when there is one.
     if (incident.createdById) {
-      this.socket.emitToUser(incident.createdById, 'incident.status', {
-        incidentId: id,
-        code: incident.code,
-        status: dto.status,
-      });
+      this.socket.emitToUser(incident.createdById, 'incident.status', statusPayload);
     }
+    // Keep other officials of the barangay in sync.
+    if (incident.barangayId) {
+      this.socket.emitToBarangay(incident.barangayId, 'incident.status', statusPayload);
+    }
+    this.socket.emitToRole('SUPER_ADMIN', 'incident.status', statusPayload);
 
     return updated;
   }
 
+  async remove(id: string, actor: ReporterContext) {
+    const incident = await this.prisma.incident.findUnique({
+      where: { id },
+      include: { attachments: { select: { url: true } } },
+    });
+    if (!incident) throw new NotFoundException('Incident not found');
+    if (actor.primaryRole !== 'SUPER_ADMIN' && incident.barangayId !== actor.barangayId) {
+      throw new ForbiddenException('Incident is outside your barangay');
+    }
+
+    // Best-effort cleanup of uploaded files; DB rows cascade on delete.
+    for (const attachment of incident.attachments) {
+      const fileName = attachment.url.split('/').pop();
+      if (!fileName) continue;
+      try {
+        await unlink(join(this.uploadDir(), fileName));
+      } catch {
+        // File already gone — ignore.
+      }
+    }
+
+    await this.prisma.incident.delete({ where: { id } });
+    await this.audit.log(actor.id, 'INCIDENT_DELETED', 'Incident', id, { code: incident.code });
+
+    const deletedPayload = { incidentId: id, code: incident.code };
+    if (incident.barangayId) {
+      this.socket.emitToBarangay(incident.barangayId, 'incident.deleted', deletedPayload);
+    }
+    this.socket.emitToRole('SUPER_ADMIN', 'incident.deleted', deletedPayload);
+
+    return { success: true };
+  }
+
   private async generateCode(): Promise<string> {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const count = await this.prisma.incident.count();
-    return `INC-${date}-${String(count + 1).padStart(4, '0')}`;
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const count = await this.prisma.incident.count({
+      where: { reportedAt: { gte: startOfDay } },
+    });
+    const base = `INC-${date}-${String(count + 1).padStart(4, '0')}`;
+    const exists = await this.prisma.incident.findUnique({ where: { code: base } });
+    // Guard against concurrent creates producing the same sequential code.
+    if (!exists) return base;
+    return `INC-${date}-${String(count + 1).padStart(4, '0')}-${randomUUID().slice(0, 4).toUpperCase()}`;
   }
 }

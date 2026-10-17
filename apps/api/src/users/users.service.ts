@@ -76,9 +76,13 @@ export class UsersService {
 
   async findAll(params: { page: number; pageSize: number; role?: Role; search?: string; barangayId?: string; isActive?: boolean }, actor?: AuthUser) {
     const where: Prisma.UserWhereInput = {};
-    if (actor && actor.primaryRole !== 'SUPER_ADMIN') {
+    const isSuperAdmin = !actor || actor.primaryRole === 'SUPER_ADMIN';
+    if (!isSuperAdmin) {
       // Tenant isolation: barangay admins only see users of their own barangay.
-      where.barangayId = actor.barangayId ?? '__none__';
+      // This cannot be widened by a client-supplied barangId filter.
+      where.barangayId = actor!.barangayId ?? '__none__';
+    } else if (params.barangayId) {
+      where.barangayId = params.barangayId;
     }
     if (params.role) where.roles = { some: { role: { name: params.role } } };
     if (params.isActive !== undefined) where.isActive = params.isActive;
@@ -89,7 +93,6 @@ export class UsersService {
         { email: { contains: params.search, mode: 'insensitive' } },
       ];
     }
-    if (params.barangayId) where.barangayId = params.barangayId;
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, SyncState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CheckpointService } from '../checkpoint/checkpoint.service';
@@ -40,7 +40,12 @@ export class SyncService {
 
   private async applyOne(record: SyncRecordDto, user: AuthUser): Promise<SyncResult> {
     if (!SYNC_ENTITY_TYPES.includes(record.entityType as never)) {
-      throw new BadRequestException(`Unsupported entity type: ${record.entityType}`);
+      // Reject just this record; never abort the rest of the batch.
+      return {
+        clientId: record.clientId,
+        state: SyncState.FAILED,
+        error: `Unsupported entity type: ${record.entityType}`,
+      };
     }
 
     const existing = await this.prisma.syncRecord.findUnique({

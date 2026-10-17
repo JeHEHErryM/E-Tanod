@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -24,7 +25,9 @@ export class PatrolController {
   constructor(private readonly patrol: PatrolService) {}
 
   private scopeFor(actor: AuthUser): string | null {
-    return actor.primaryRole === 'SUPER_ADMIN' ? null : (actor.barangayId ?? null);
+    if (actor.primaryRole === 'SUPER_ADMIN') return null;
+    // A non-super-admin without a barangay must never see global data.
+    return actor.barangayId ?? '__none__';
   }
 
   @Get('schedules')
@@ -61,6 +64,12 @@ export class PatrolController {
     @CurrentUser() actor: AuthUser,
   ) {
     return this.patrol.updateSchedule(id, dto, actor.id, this.scopeFor(actor));
+  }
+
+  @Delete('schedules/:id')
+  @Permissions('patrol.manage')
+  deleteSchedule(@Param('id') id: string, @CurrentUser() actor: AuthUser) {
+    return this.patrol.deleteSchedule(id, actor.id, this.scopeFor(actor));
   }
 
   @Get('assignments')

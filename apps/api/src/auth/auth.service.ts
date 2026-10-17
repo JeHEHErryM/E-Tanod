@@ -62,6 +62,7 @@ export class AuthService {
       username: user.username,
       roles: user.roles,
       primaryRole: user.primaryRole,
+      barangayId: user.barangayId,
     };
 
     const accessToken = await this.jwt.signAsync(payload, {
@@ -114,7 +115,13 @@ export class AuthService {
     });
 
     const accessToken = await this.jwt.signAsync(
-      { sub: user.id, username: user.username, roles: authUser.roles, primaryRole },
+      {
+        sub: user.id,
+        username: user.username,
+        roles: authUser.roles,
+        primaryRole,
+        barangayId: authUser.barangayId,
+      },
       {
         secret: this.config.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.config.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'),

@@ -36,9 +36,10 @@ export class CreateCheckpointDto {
   @Max(500)
   radiusMeters?: number;
 
+  /** Optional for barangay-scoped admins (defaults to their own barangay). */
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  barangayId!: string;
+  barangayId?: string;
 }
 
 export class UpdateCheckpointDto {

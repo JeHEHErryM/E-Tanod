@@ -99,6 +99,8 @@ export class CheckpointService {
       if (!actor.barangayId) {
         throw new ForbiddenException('Your account is not assigned to a barangay');
       }
+    } else if (!dto.barangayId && !actor.barangayId) {
+      throw new ForbiddenException('Select a barangay for this checkpoint');
     }
     const checkpoint = await this.prisma.checkpoint.create({
       data: {
@@ -108,7 +110,8 @@ export class CheckpointService {
         latitude: dto.latitude,
         longitude: dto.longitude,
         radiusMeters: dto.radiusMeters ?? 50,
-        barangayId: dto.barangayId ?? actor.barangayId ?? null,
+        // Guards above guarantee a barangay is present for every allowed path.
+        barangayId: (dto.barangayId ?? actor.barangayId) as string,
         createdById: actor.id,
         qrToken: { create: { token: this.generateQrToken(), validUntil: this.qrExpiry() } },
       },
@@ -161,7 +164,9 @@ export class CheckpointService {
     });
 
     await this.audit.log(actor.id, 'QR_REGENERATED', 'Checkpoint', id);
-    this.socket.emitPublic('checkpoint.qr.regenerated', { checkpointId: id });
+    this.socket.emitToBarangay(existing.barangayId, 'checkpoint.qr.regenerated', {
+      checkpointId: id,
+    });
     return qrToken;
   }
 
@@ -361,7 +366,7 @@ export class CheckpointService {
 
   private async recordScan(
     checkpointId: string | null,
-    checkpoint: { id: string; name: string; code: string } | null,
+    checkpoint: { id: string; name: string; code: string; barangayId: string | null } | null,
     patrolSessionId: string | null,
     tanodId: string,
     result: ScanResult,
@@ -393,12 +398,17 @@ export class CheckpointService {
         checkpoint.id,
         { checkpointCode: checkpoint.code },
       );
-      this.socket.emitPublic('checkpoint.verified', {
+      const verifiedPayload = {
         checkpointId: checkpoint.id,
         checkpointName: checkpoint.name,
         tanodId,
         scannedAt: record.scannedAt,
-      });
+      };
+      if (checkpoint.barangayId) {
+        this.socket.emitToBarangay(checkpoint.barangayId, 'checkpoint.verified', verifiedPayload);
+      } else {
+        this.socket.emitPublic('checkpoint.verified', verifiedPayload);
+      }
     }
 
     return {

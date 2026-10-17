@@ -4,13 +4,15 @@ import * as argon2 from 'argon2';
 const prisma = new PrismaClient();
 
 /**
- * DEVELOPMENT SEED DATA
- * All data is clearly labelled as DEMO data and does NOT represent real
- * crime statistics or real Mamburao residents.
+ * DEVELOPMENT BASE SEED
+ * Provisions the platform catalogue (roles, incident categories) plus a single
+ * demo barangay and demo accounts for local development. No synthetic
+ * operational data (incidents, checkpoints, patrol schedules) is created so the
+ * system runs on real data entered through the app.
  */
 
 async function main() {
-  console.log('Seeding demo data...');
+  console.log('Seeding base data...');
 
   // --- Roles ---
   const roleNames = Object.values(Role);
@@ -97,71 +99,6 @@ async function main() {
     });
   }
 
-  // --- Demo Checkpoints ---
-  const checkpointDefs = [
-    { code: 'CP-001', name: 'Barangay Hall', lat: 13.2233, lng: 120.596 },
-    { code: 'CP-002', name: 'Poblacion Market', lat: 13.2245, lng: 120.5972 },
-    { code: 'CP-003', name: 'Seaside Road', lat: 13.2228, lng: 120.5991 },
-  ];
-  const checkpointMap: Record<string, string> = {};
-  for (const c of checkpointDefs) {
-    const checkpoint = await prisma.checkpoint.upsert({
-      where: { code: c.code },
-      update: {},
-      create: {
-        code: c.code,
-        name: c.name,
-        latitude: c.lat,
-        longitude: c.lng,
-        radiusMeters: 50,
-        barangayId: barangay.id,
-        status: 'ACTIVE',
-      },
-    });
-    checkpointMap[c.code] = checkpoint.id;
-
-    // QR token
-    await prisma.checkpointQRToken.upsert({
-      where: { checkpointId: checkpoint.id },
-      update: {},
-      create: {
-        checkpointId: checkpoint.id,
-        token: `qt_${c.code.toLowerCase()}_${checkpoint.code}`,
-      },
-    });
-  }
-
-  // --- Demo Patrol Schedule ---
-  const today = new Date().toISOString().slice(0, 10);
-  const existingSchedule = await prisma.patrolSchedule.findFirst({
-    where: { title: 'DEMO Night Patrol', barangayId: barangay.id, scheduledDate: today },
-  });
-  if (existingSchedule) {
-    console.log(`DEMO patrol schedule already exists: ${existingSchedule.id}`);
-    return;
-  }
-  const schedule = await prisma.patrolSchedule.create({
-    data: {
-      title: 'DEMO Night Patrol',
-      description: 'DEMO schedule for development.',
-      barangayId: barangay.id,
-      scheduledDate: today,
-      startTime: '18:00',
-      endTime: '22:00',
-      createdById: created['barangayadmin'].id,
-      assignments: {
-        create: {
-          tanodId: created['tanod1'].id,
-          status: 'SCHEDULED',
-          scheduledAt: new Date(),
-        },
-      },
-      requiredCheckpoints: {
-        create: Object.values(checkpointMap).map((id, i) => ({ checkpointId: id, order: i + 1 })),
-      },
-    },
-  });
-
   console.log('Seeding complete.');
   console.log('DEMO accounts (password: DemoPass123!): barangayadmin, tanod1, tanod2, resident1');
   if (process.env.SUPERADMIN_PASSWORD) {
@@ -169,7 +106,6 @@ async function main() {
   } else {
     console.log('Super admin: using the default dev password (set SUPERADMIN_PASSWORD in production).');
   }
-  console.log(`DEMO patrol schedule: ${schedule.id}`);
 }
 
 main()
