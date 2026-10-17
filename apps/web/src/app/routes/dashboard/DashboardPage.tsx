@@ -103,11 +103,11 @@ export function DashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <Stat label={t('dashboard.stats.activePatrols')} value={data?.activePatrols ?? 0} icon={<ShieldHalf className="h-5 w-5" />} accent="sky" />
-              <Stat label={t('dashboard.stats.completedPatrols')} value={data?.completedPatrols ?? 0} icon={<CheckCircle2 className="h-5 w-5" />} accent="emerald" />
-              <Stat label={t('dashboard.stats.todayIncidents')} value={data?.todayIncidents ?? 0} icon={<Siren className="h-5 w-5" />} accent="rose" />
-              <Stat label={t('dashboard.stats.openReports')} value={data?.openReports ?? 0} icon={<Inbox className="h-5 w-5" />} accent="amber" />
-              <Stat label={t('dashboard.stats.missedCheckpoints')} value={data?.missedCheckpoints ?? 0} icon={<AlertTriangle className="h-5 w-5" />} accent="brand" />
+              <Stat label={t('dashboard.stats.activePatrols')} value={data?.activePatrols ?? 0} icon={<ShieldHalf className="h-5 w-5" />} accent="sky" onClick={() => navigate('/patrol')} />
+              <Stat label={t('dashboard.stats.completedPatrols')} value={data?.completedPatrols ?? 0} icon={<CheckCircle2 className="h-5 w-5" />} accent="emerald" onClick={() => navigate('/patrol')} />
+              <Stat label={t('dashboard.stats.todayIncidents')} value={data?.todayIncidents ?? 0} icon={<Siren className="h-5 w-5" />} accent="rose" onClick={() => navigate('/incidents')} />
+              <Stat label={t('dashboard.stats.openReports')} value={data?.openReports ?? 0} icon={<Inbox className="h-5 w-5" />} accent="amber" onClick={() => navigate('/incidents')} />
+              <Stat label={t('dashboard.stats.missedCheckpoints')} value={data?.missedCheckpoints ?? 0} icon={<AlertTriangle className="h-5 w-5" />} accent="brand" onClick={() => navigate('/checkpoints')} />
             </div>
           )}
         </>

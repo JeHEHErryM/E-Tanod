@@ -139,22 +139,31 @@ async function main() {
     { code: 'CP-003', name: 'Poblacion Market Gate', barangay: 'POB02', lat: CENTER_LAT + 0.0007, lng: CENTER_LNG + 0.0001, radius: 30 },
   ];
   for (const c of checkpointDefs) {
-    if (cpByCode.has(c.code)) continue;
-    const barangay = [...bById.values()].find((b) => b.code === c.barangay);
-    await req('/checkpoints', {
+    let checkpoint = cpByCode.get(c.code);
+    if (!checkpoint) {
+      const barangay = [...bById.values()].find((b) => b.code === c.barangay);
+      checkpoint = await req('/checkpoints', {
+        method: 'POST',
+        headers: auth,
+        body: JSON.stringify({
+          code: c.code,
+          name: c.name,
+          description: 'DEMO checkpoint for the defense demo.',
+          latitude: c.lat,
+          longitude: c.lng,
+          radiusMeters: c.radius,
+          barangayId: barangay.id,
+        }),
+      });
+      cpByCode.set(c.code, checkpoint);
+      console.log('  created checkpoint', c.code);
+    }
+    await req(`/checkpoints/${checkpoint.id}/qr/regenerate`, {
       method: 'POST',
       headers: auth,
-      body: JSON.stringify({
-        code: c.code,
-        name: c.name,
-        description: 'DEMO checkpoint for the defense demo.',
-        latitude: c.lat,
-        longitude: c.lng,
-        radiusMeters: c.radius,
-        barangayId: barangay.id,
-      }),
+      body: JSON.stringify({}),
     });
-    console.log('  created checkpoint', c.code);
+    console.log('  refreshed checkpoint QR', c.code);
   }
 
   // --- Incidents (geo data for map + heatmap) ---

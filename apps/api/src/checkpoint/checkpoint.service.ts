@@ -16,7 +16,7 @@ import {
   ScanCheckpointDto,
 } from './dto/checkpoint.dto';
 
-const QR_TOKEN_TTL_DAYS = 30;
+const QR_TOKEN_TTL_DAYS = 365;
 const MAX_GPS_ACCURACY_METERS = 200;
 
 @Injectable()

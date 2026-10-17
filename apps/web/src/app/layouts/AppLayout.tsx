@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/auth';
-import { Button } from '@e-tanod/ui';
 import type { RoleName } from '@e-tanod/types';
 import { isAdmin } from '@/app/roles';
 import { BrandWordmark } from '@/app/components/AppLogo';
@@ -253,14 +252,6 @@ export function AppLayout() {
 
 function UserCard() {
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   return (
     <div className="flex items-center gap-3 rounded-xl bg-sand-50 p-2.5">
@@ -270,9 +261,6 @@ function UserCard() {
         </div>
         <div className="truncate text-xs text-ink-400">@{user?.username}</div>
       </div>
-      <Button variant="ghost" size="sm" className="h-9 px-2" onClick={handleLogout} aria-label={t('layout.logout')}>
-        <LogOut className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

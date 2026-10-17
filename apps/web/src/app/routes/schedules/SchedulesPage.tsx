@@ -376,6 +376,8 @@ function ScheduleSheet({
           <Input
             label={t('schedules.dateLabel')}
             type="date"
+            min="2025-01-01"
+            max="2027-12-31"
             value={form.scheduledDate}
             onChange={(e) => set({ scheduledDate: e.target.value })}
           />

@@ -9,7 +9,7 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/roles.decorator';
 import type { AuthUser } from '../auth/auth-user.interface';
@@ -66,8 +66,8 @@ export class IncidentController {
 
   @Post(':id/attachments')
   @UseInterceptors(
-    FileInterceptor('files', {
-      limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+    FilesInterceptor('files', 5, {
+      limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
   @Permissions('incident.read', 'incident.review', 'resident.track')

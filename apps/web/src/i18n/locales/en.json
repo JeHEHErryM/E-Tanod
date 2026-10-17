@@ -203,7 +203,7 @@
     "captureLocation": "Capture my location",
     "locating": "Locating…",
     "qrToken": "QR token",
-    "qrPlaceholder": "Paste scanned QR value (e.g. qr_cp_001)",
+    "qrPlaceholder": "Paste scanned QR value (e.g. qr_ab12…)",
     "cameraOpen": "Scan with camera",
     "or": "Or",
     "cameraTitle": "Point your camera at the checkpoint QR code",

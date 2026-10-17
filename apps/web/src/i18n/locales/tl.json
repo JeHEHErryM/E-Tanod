@@ -203,7 +203,7 @@
     "captureLocation": "Kunin ang aking lokasyon",
     "locating": "Hinahanap…",
     "qrToken": "QR token",
-    "qrPlaceholder": "Idikit ang na-scan na QR value (hal. qr_cp_001)",
+    "qrPlaceholder": "Idikit ang na-scan na QR value (hal. qr_ab12…)",
     "cameraOpen": "I-scan gamit ang camera",
     "or": "O",
     "cameraTitle": "Ituro ang camera sa QR code ng checkpoint",

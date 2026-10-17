@@ -105,6 +105,9 @@ On success the CLI prints `▲ Aliased https://e-tanod.vercel.app` and
 - ensures 16 barangays exist,
 - resets the demo accounts (`barangayadmin`, `tanod1`, `tanod2`, `resident1`) to a
   known password, verified + active, with barangay assignments,
+- ensures the demo checkpoints exist and **refreshes their QR tokens**
+  (`POST /checkpoints/:id/qr/regenerate`) so tanod scans never fail with an
+  expired token,
 - seeds incident categories and a set of labelled demo incidents.
 
 ```powershell
