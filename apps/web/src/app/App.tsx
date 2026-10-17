@@ -70,8 +70,8 @@ function SignupRoute() {
 }
 
 function RoleHome() {
-  const role = useAuthStore((s) => s.user?.primaryRole);
-  if (role === 'RESIDENT') return <Navigate to="/residents" replace />;
+  // Every role lands on the Dashboard; the page adapts its actions per role
+  // (residents get "report/track" shortcuts, which link to /residents).
   return <DashboardPage />;
 }
 
